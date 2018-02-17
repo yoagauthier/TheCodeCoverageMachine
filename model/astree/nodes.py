@@ -34,11 +34,11 @@ class Node(object):
         elif isinstance(self, IfNode):
             return (
                 self.condition_expression.is_boolean() and
-                self.then_condition.is_program() and
-                self.else_condition.is_program()
+                self.then_expression.is_program() and
+                self.else_expression.is_program()
             )
         elif isinstance(self, WhileNode):
-            return self.left_epxression.is_boolean() and self.right_expression.is_program()
+            return self.left_expression.is_boolean() and self.right_expression.is_program()
         else:
             return False
 

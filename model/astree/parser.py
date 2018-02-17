@@ -11,6 +11,7 @@ from model.astree.nodes import (
     LteNode,
     LtNode,
     EqualNode,
+    NotNode,
     AndNode,
     OrNode,
     SkipNode,
@@ -172,7 +173,7 @@ class ProgramParser(object):
                     expected, current_node, previous_nodes, self.parse_boolean
                 )
             elif current_token == '!':
-                current_node = self.parse_boolean(previous_nodes, expected)
+                current_node = NotNode(self.parse_boolean(previous_nodes, expected))
                 return self._parse_if_expected_not_empty(
                     expected, current_node, previous_nodes, self.parse_boolean
                 )
