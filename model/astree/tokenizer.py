@@ -18,18 +18,18 @@ class Tokenizer(object):
         current_token = ''
 
         for char in text:
+            if char == ' ' or char == '\n':
+                if len(current_token) > 0:
+                    tokenized_text.append(current_token)
+                    current_token = ''
+                continue
+
             if len(current_token) == 1 and current_token in ':<>':
                 if char != '=':
                     tokenized_text.append(current_token)
                     current_token = char
                 else:
                     current_token += char
-                    tokenized_text.append(current_token)
-                    current_token = ''
-                continue
-
-            if char == ' ' or char == '\n':
-                if len(current_token) > 0:
                     tokenized_text.append(current_token)
                     current_token = ''
                 continue
@@ -70,33 +70,37 @@ class Token(object):
     closing_brackets = [')', '}']
 
     @staticmethod
-    def is_identifier(char):
-        return char.isalpha() and char not in Token.key_words
+    def is_identifier(token):
+        return token.isalpha() and token not in Token.key_words
 
     @staticmethod
-    def opposite_bracket(char):
-        if char == '(':
+    def is_number(token):
+        return type(token) == int
+
+    @staticmethod
+    def opposite_bracket(token):
+        if token == '(':
             return ')'
-        elif char == ')':
+        elif token == ')':
             return '('
-        elif char == '{':
+        elif token == '{':
             return '}'
-        elif char == '}':
+        elif token == '}':
             return '{'
         else:
             return 'Not a bracket'
 
     @staticmethod
-    def is_opening_bracket(char):
-        return char in Token.opening_brackets
+    def is_opening_bracket(token):
+        return token in Token.opening_brackets
 
     @staticmethod
-    def is_closing_bracket(char):
-        return char in Token.closing_brackets
+    def is_closing_bracket(token):
+        return token in Token.closing_brackets
 
     @staticmethod
-    def number(char):
+    def number(token):
         try:
-            return int(char)
+            return int(token)
         except ValueError:
-            return char
+            return token

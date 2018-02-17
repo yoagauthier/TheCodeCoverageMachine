@@ -1,3 +1,5 @@
+from pprint import pformat
+
 from model.astree.tokenizer import Token
 
 
@@ -41,6 +43,12 @@ class Node(object):
             return self.left_expression.is_boolean() and self.right_expression.is_program()
         else:
             return False
+
+    def to_dict(self):
+        raise NotImplementedError
+
+    def __str__(self):
+        return pformat(self.to_dict())
 
 
 class UnaryNode(Node):
@@ -159,16 +167,6 @@ class OrNode(BooleanOperator, BinaryNode):
     operator = 'or'
 
 
-class AssignmentNode(BinaryNode):
-    def to_dict(self):
-        return {
-            'assignment': {
-                'left': self.left_expression.to_dict(),
-                'right': self.right_expression.to_dict()
-            }
-        }
-
-
 class SequenceNode(BinaryNode):
     def to_dict(self):
         return {
@@ -177,23 +175,40 @@ class SequenceNode(BinaryNode):
         }
 
 
-class WhileNode(BinaryNode):
+class ProgramNode(BinaryNode):
+    def __init__(self, left_expression, right_expression, label):
+        super().__init__(left_expression, right_expression)
+        self.label = label
+
+
+class AssignmentNode(ProgramNode):
     def to_dict(self):
         return {
-            'while': self.left_expression.to_dict(),
+            '{}: assignment'.format(self.label): {
+                'left': self.left_expression.to_dict(),
+                'right': self.right_expression.to_dict()
+            }
+        }
+
+
+class WhileNode(ProgramNode):
+    def to_dict(self):
+        return {
+            '{}: while'.format(self.label): self.left_expression.to_dict(),
             'do': self.right_expression.to_dict()
         }
 
 
 class IfNode(Node):
-    def __init__(self, condition_expression, then_expression, else_expression):
+    def __init__(self, condition_expression, then_expression, else_expression, label):
         self.condition_expression = condition_expression
         self.then_expression = then_expression
         self.else_expression = else_expression
+        self.label = label
 
     def to_dict(self):
         return {
-            'if': self.condition_expression.to_dict(),
+            '{}: if'.format(self.label): self.condition_expression.to_dict(),
             'then': self.then_expression.to_dict(),
             'else': self.else_expression.to_dict()
         }

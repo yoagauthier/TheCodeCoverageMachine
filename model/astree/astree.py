@@ -1,5 +1,3 @@
-from pprint import pformat
-
 from model.astree.parser import ParsingError, ProgramParser
 from model.astree.tokenizer import Token, Tokenizer
 
@@ -42,4 +40,4 @@ class ASTree(object):
         return self.root_node.to_dict()
 
     def __str__(self):
-        return pformat(self.to_dict())
+        return self.root_node.__str__()

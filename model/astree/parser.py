@@ -61,11 +61,12 @@ class ProgramParser(object):
 
     def parse_program(self, previous_nodes=[], expected=[]):
         self._check_end()
+        label = self._parse_label()
         current_token = self.tokens[self.index]
         self.index += 1
 
         if current_token == 'skip':
-            current_node = SkipNode('_')
+            current_node = SkipNode('_', label)
             return self._parse_if_expected_not_empty(
                 expected, current_node, previous_nodes, self.parse_program
             )
@@ -88,22 +89,24 @@ class ProgramParser(object):
                 self.index += 1
                 left_node = VariableNode(current_token)
                 right_node = self.parse_arithmetic()
-                current_node = AssignmentNode(left_node, right_node)
+                current_node = AssignmentNode(left_node, right_node, label)
                 return self._parse_if_expected_not_empty(
                     expected, current_node, previous_nodes, self.parse_program
                 )
             raise ParsingError
         elif current_token == 'while':
+            label = self._parse_label()
             left_node = self.parse_boolean()
             if self.tokens[self.index] == 'do':
                 self.index += 1
                 right_node = self.parse_program()
-                current_node = WhileNode(left_node, right_node)
+                current_node = WhileNode(left_node, right_node, label)
                 return self._parse_if_expected_not_empty(
                     expected, current_node, previous_nodes, self.parse_program
                 )
             raise ParsingError
         elif current_token == 'if':
+            label = self._parse_label()
             condition_node = self.parse_boolean()
 
             if self.tokens[self.index] == 'then':
@@ -118,7 +121,7 @@ class ProgramParser(object):
             else:
                 raise ParsingError
 
-            current_node = IfNode(condition_node, then_node, else_node)
+            current_node = IfNode(condition_node, then_node, else_node, label)
             return self._parse_if_expected_not_empty(
                 expected, current_node, previous_nodes, self.parse_program
             )
@@ -231,3 +234,13 @@ class ProgramParser(object):
             else:
                 return parsing_func(previous_nodes, expected[1:])
         raise ParsingError
+
+    def _parse_label(self):
+        label = self.tokens[self.index]
+        if not Token.is_number(label):
+            return None
+        self.index += 1
+        if not self.tokens[self.index] == ':':
+            raise ParsingError
+        self.index += 1
+        return label
