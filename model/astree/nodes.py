@@ -52,34 +52,34 @@ class VariableNode(UnaryNode):
     def is_variable(self):
         return type(self.expression) == str and self.expression not in Token.key_words
 
-    def __str__(self, index=0):
-        return '{variable: {}}'.format(self.expression, index + 1)
+    def to_dict(self):
+        return {'variable': self.expression}
 
 
 class NumberNode(UnaryNode):
     def is_number(self):
         return type(self.expression) == int
 
-    def __str__(self, index=0):
-        return '(number: {})'.format(self.expression, index + 1)
+    def to_dict(self):
+        return {'number': self.expression}
 
 
 class BooleanNode(UnaryNode):
     def is_boolean_variable(self):
         return type(self.expression) == str and self.expression in Token.boolean_key_words
 
-    def __str__(self, index=0):
-        return '{number: {}}'.format(self.expression, index + 1)
+    def to_dict(self):
+        return {'boolean': self.expression}
 
 
 class NotNode(UnaryNode):
-    def __str__(self, index=0):
-        return '{not: {}}'.format(self.expression, index + 1)
+    def to_dict(self):
+        return {'not': self.expression.to_dict()}
 
 
 class SkipNode(UnaryNode):
-    def __str__(self, index=0):
-        return '{skip: {}}'.format(self.expression, index + 1)
+    def to_dict(self):
+        return {'skip': self.expression}
 
 
 class BinaryNode(Node):
@@ -89,119 +89,100 @@ class BinaryNode(Node):
 
 
 class ArithmeticOperator(object):
-    pass
+    def to_dict(self):
+        return {
+            'arithmetic operator': self.operator,
+            'left': self.left_expression.to_dict(),
+            'right': self.right_expression.to_dict(),
+        }
 
 
 class AddNode(ArithmeticOperator, BinaryNode):
-    def __str__(self, index=0):
-        return '{arithmetic operator: +, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    operator = '+'
 
 
 class MinusNode(ArithmeticOperator, BinaryNode):
-    def __str__(self, index=0):
-        return '{arithmetic operator: -, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    operator = '-'
 
 
 class TimesNode(ArithmeticOperator, BinaryNode):
-    def __str__(self, index=0):
-        return '{arithmetic operator: *, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    operator = '*'
 
 
 class DivideNode(ArithmeticOperator, BinaryNode):
-    def __str__(self, index=0):
-        return '{arithmetic operator: /, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    operator = '/'
 
 
 class BooleanComparator(object):
-    pass
+    def to_dict(self):
+        return {
+            'comparator': self.comparator,
+            'left': self.left_expression.to_dict(),
+            'right': self.right_expression.to_dict()
+        }
 
 
 class GteNode(BooleanComparator, BinaryNode):
-    def __str__(self, index=0):
-        return '{comparator: >=, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    comparator = '>='
 
 
 class GtNode(BooleanComparator, BinaryNode):
-    def __str__(self, index=0):
-        return '{comparator: >, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    comparator = '>'
 
 
 class LteNode(BooleanComparator, BinaryNode):
-    def __str__(self, index=0):
-        return '{comparator: <=, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    comparator = '<='
 
 
 class LtNode(BooleanComparator, BinaryNode):
-    def __str__(self, index=0):
-        return '{comparator: <, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    comparator = '<'
+
+
+class EqualNode(BooleanComparator, BinaryNode):
+    comparator = '='
 
 
 class BooleanOperator(object):
-    pass
+    def to_dict(self):
+        return {
+            'boolean operator': self.operator,
+            'left': self.left_expression.to_dict(),
+            'right': self.right_expression.to_dict()
+        }
 
 
 class AndNode(BooleanOperator, BinaryNode):
-    def __str__(self, index=0):
-        return '{boolean operator: and, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    operator = 'and'
 
 
 class OrNode(BooleanOperator, BinaryNode):
-    def __str__(self, index=0):
-        return '{boolean operator: or, left: {}, right: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    operator = 'or'
 
 
 class AssignmentNode(BinaryNode):
-    def __str__(self, index=0):
-        return '{assignment: {}, {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    def to_dict(self):
+        return {
+            'assignment': {
+                'left': self.left_expression.to_dict(),
+                'right': self.right_expression.to_dict()
+            }
+        }
 
 
 class SequenceNode(BinaryNode):
-    def __str__(self, index=0):
-        return '{c1: {}, c2: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    def to_dict(self):
+        return {
+            'c1': self.left_expression.to_dict(),
+            'c2': self.right_expression.to_dict()
+        }
 
 
 class WhileNode(BinaryNode):
-    def __str__(self, index=0):
-        return '{while: {}, do: {}}'.format(
-            self.left_expression,
-            self.right_expression
-        )
+    def to_dict(self):
+        return {
+            'while': self.left_expression.to_dict(),
+            'do': self.right_expression.to_dict()
+        }
 
 
 class IfNode(Node):
@@ -210,9 +191,9 @@ class IfNode(Node):
         self.then_expression = then_expression
         self.else_expression = else_expression
 
-    def __str__(self, index=0):
-        return '{if: {}, then: {}, else: {}}'.format(
-            self.condition_expression,
-            self.then_expression,
-            self.else_expression
-        )
+    def to_dict(self):
+        return {
+            'if': self.condition_expression.to_dict(),
+            'then': self.then_expression.to_dict(),
+            'else': self.else_expression.to_dict()
+        }

@@ -52,7 +52,7 @@ class Tokenizer(object):
 
         tokenized_text.append(current_token) if current_token else None
 
-        return tokenized_text
+        return [Token.number(token) for token in tokenized_text]
 
 
 class Token(object):
@@ -93,3 +93,10 @@ class Token(object):
     @staticmethod
     def is_closing_bracket(char):
         return char in Token.closing_brackets
+
+    @staticmethod
+    def number(char):
+        try:
+            return int(char)
+        except ValueError:
+            return char

@@ -1,3 +1,4 @@
+from model.astree.parser import ProgramParser
 from model.astree.tokenizer import Token, Tokenizer
 
 
@@ -14,7 +15,7 @@ class ASTree(object):
         # Tokenize program
         self.tokenized_program = Tokenizer.tokenize(self.cleared_program)
 
-        self.root_node = None
+        self.root_node = ProgramParser(self.tokenized_program).parse()
 
     def is_well_formed(self):
         pile = []
@@ -30,5 +31,5 @@ class ASTree(object):
                     return False
         return pile == []
 
-    def __str__(self):
-        return str(self.root_node)
+    def to_dict(self):
+        return self.root_node.to_dict()
