@@ -1,5 +1,5 @@
-from model.astree.parser import ParsingError, ProgramParser
-from model.astree.tokenizer import Token, Tokenizer
+from model.parser import ParsingError, ProgramParser
+from model.tokenizer import Token, Tokenizer
 
 
 class ASTree(object):
@@ -41,3 +41,6 @@ class ASTree(object):
 
     def __str__(self):
         return self.root_node.__str__()
+
+    def to_cover_graph(self):
+        return self.root_node.to_cover_graph()

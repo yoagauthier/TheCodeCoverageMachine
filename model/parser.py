@@ -1,4 +1,4 @@
-from model.astree.nodes import (
+from model.nodes import (
     AddNode,
     BooleanNode,
     MinusNode,
@@ -20,7 +20,7 @@ from model.astree.nodes import (
     WhileNode,
     IfNode
 )
-from model.astree.tokenizer import Token
+from model.tokenizer import Token
 
 
 class ParsingError(Exception):
