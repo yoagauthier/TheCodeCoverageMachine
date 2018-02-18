@@ -14,7 +14,7 @@ class ASTree(object):
 
         # Tokenize program
         self.tokenized_program = Tokenizer.tokenize(self.cleared_program)
-        if not self.is_well_formed:
+        if not self.is_well_formed():
             raise ParsingError
 
         # Parse program
@@ -44,3 +44,6 @@ class ASTree(object):
 
     def to_cover_graph(self):
         return self.root_node.to_cover_graph()
+
+    def eval(self, env={}):
+        return self.root_node.eval(env)

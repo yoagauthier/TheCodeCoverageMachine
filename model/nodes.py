@@ -4,6 +4,10 @@ from model.cover_graph import CoverGraph, Edge, Vertex
 from model.tokenizer import Token
 
 
+class ExecutionError(Exception):
+    pass
+
+
 class Node(object):
     def is_arithmetic(self):
         if isinstance(self, VariableNode):
@@ -45,6 +49,9 @@ class Node(object):
         else:
             return False
 
+    def eval(self, env):
+        raise NotImplementedError
+
     def to_dict(self):
         raise NotImplementedError
 
@@ -61,6 +68,12 @@ class VariableNode(UnaryNode):
     def is_variable(self):
         return type(self.expression) == str and self.expression not in Token.key_words
 
+    def eval(self, env):
+        try:
+            return env[self.expression]
+        except KeyError:
+            raise ExecutionError
+
     def to_dict(self):
         return {'variable': self.expression}
 
@@ -68,6 +81,9 @@ class VariableNode(UnaryNode):
 class NumberNode(UnaryNode):
     def is_number(self):
         return type(self.expression) == int
+
+    def eval(self, env):
+        return self.expression
 
     def to_dict(self):
         return {'number': self.expression}
@@ -91,22 +107,37 @@ class ArithmeticOperatorNode(BinaryNode):
 class AddNode(ArithmeticOperatorNode):
     operator = '+'
 
+    def eval(self, env):
+        return self.left_expression.eval(env) + self.right_expression.eval(env)
+
 
 class MinusNode(ArithmeticOperatorNode):
     operator = '-'
+
+    def eval(self, env):
+        return self.left_expression.eval(env) - self.right_expression.eval(env)
 
 
 class TimesNode(ArithmeticOperatorNode):
     operator = '*'
 
+    def eval(self, env):
+        return self.left_expression.eval(env) * self.right_expression.eval(env)
+
 
 class DivideNode(ArithmeticOperatorNode):
     operator = '/'
+
+    def eval(self, env):
+        return self.left_expression.eval(env) / self.right_expression.eval(env)
 
 
 class BooleanNode(UnaryNode):
     def is_boolean_variable(self):
         return type(self.expression) == str and self.expression in Token.boolean_key_words
+
+    def eval(self, env):
+        return True if self.expression == 'true' else False
 
     def to_dict(self):
         return {'boolean': self.expression}
@@ -124,21 +155,36 @@ class BooleanComparatorNode(BinaryNode):
 class GteNode(BooleanComparatorNode):
     comparator = '>='
 
+    def eval(self, env):
+        return self.left_expression.eval(env) >= self.right_expression.eval(env)
+
 
 class GtNode(BooleanComparatorNode):
     comparator = '>'
+
+    def eval(self, env):
+        return self.left_expression.eval(env) > self.right_expression.eval(env)
 
 
 class LteNode(BooleanComparatorNode):
     comparator = '<='
 
+    def eval(self, env):
+        return self.left_expression.eval(env) <= self.right_expression.eval(env)
+
 
 class LtNode(BooleanComparatorNode):
     comparator = '<'
 
+    def eval(self, env):
+        return self.left_expression.eval(env) < self.right_expression.eval(env)
+
 
 class EqualNode(BooleanComparatorNode):
     comparator = '='
+
+    def eval(self, env):
+        return self.left_expression.eval(env) == self.right_expression.eval(env)
 
 
 class BooleanOperatorNode(BinaryNode):
@@ -153,12 +199,21 @@ class BooleanOperatorNode(BinaryNode):
 class AndNode(BooleanOperatorNode):
     operator = 'and'
 
+    def eval(self, env):
+        return self.left_expression.eval(env) and self.right_expression.eval(env)
+
 
 class OrNode(BooleanOperatorNode):
     operator = 'or'
 
+    def eval(self, env):
+        return self.left_expression.eval(env) or self.right_expression.eval(env)
+
 
 class NotNode(UnaryNode):
+    def eval(self, env):
+        return not self.expression.eval(env)
+
     def to_dict(self):
         return {'not': self.expression.to_dict()}
 
@@ -179,6 +234,9 @@ class SkipNode(UnaryNode, ProgramNode):
         edge = Edge(root_vertex, end_vertex, BooleanNode('true'), self)
         return CoverGraph(root_vertex, end_vertex, [root_vertex, end_vertex], [edge])
 
+    def eval(self, env):
+        return env
+
     def to_dict(self):
         return {'{}: skip'.format(self.label): self.expression}
 
@@ -193,6 +251,10 @@ class AssignmentNode(BinaryNode, ProgramNode):
         end_vertex = Vertex('_', 'end')
         edge = Edge(root_vertex, end_vertex, BooleanNode('true'), self)
         return CoverGraph(root_vertex, end_vertex, [root_vertex, end_vertex], [edge])
+
+    def eval(self, env):
+        env[self.left_expression.expression] = self.right_expression.eval(env)
+        return env
 
     def to_dict(self):
         return {
@@ -216,6 +278,10 @@ class SequenceNode(BinaryNode, ProgramNode):
             cover_graph_2.edges
         )
         return CoverGraph(root_vertex, end_vertex, vertices, edges)
+
+    def eval(self, env):
+        env = self.left_expression.eval(env)
+        return self.right_expression.eval(env)
 
     def to_dict(self):
         return {
@@ -249,6 +315,12 @@ class WhileNode(BinaryNode, ProgramNode):
             )
         ]
         return CoverGraph(root_vertex, end_vertex, vertices, edges)
+
+    def eval(self, env):
+        if self.left_expression.eval(env):
+            env = self.right_expression.eval(env)
+            return self.eval(env)
+        return env
 
     def to_dict(self):
         return {
@@ -286,6 +358,11 @@ class IfNode(Node, ProgramNode):
             )
         ] + cover_graph_2.edges
         return CoverGraph(root_vertex, end_vertex, vertices, edges)
+
+    def eval(self, env):
+        if self.condition_expression.eval(env):
+            return self.then_expression.eval(env)
+        return self.else_expression.eval(env)
 
     def to_dict(self):
         return {
