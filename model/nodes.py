@@ -9,6 +9,8 @@ class ExecutionError(Exception):
 
 
 class Node(object):
+    seen_labels = []
+
     def is_arithmetic(self):
         if isinstance(self, VariableNode):
             return self.is_variable()
@@ -48,6 +50,9 @@ class Node(object):
             return self.left_expression.is_boolean() and self.right_expression.is_program()
         else:
             return False
+
+    def is_well_labelled(self):
+        return len(self.seen_labels) == len(set(self.seen_labels))
 
     def eval(self, env):
         raise NotImplementedError
@@ -227,6 +232,7 @@ class SkipNode(UnaryNode, ProgramNode):
     def __init__(self, expression, label):
         super().__init__(expression)
         self.label = label
+        self.seen_labels.append(label)
 
     def to_cover_graph(self):
         root_vertex = Vertex(self.label, 'skip')
@@ -245,6 +251,7 @@ class AssignmentNode(BinaryNode, ProgramNode):
     def __init__(self, left_expression, right_expression, label):
         super().__init__(left_expression, right_expression)
         self.label = label
+        self.seen_labels.append(label)
 
     def to_cover_graph(self):
         root_vertex = Vertex(self.label, 'assignment')
@@ -294,6 +301,7 @@ class WhileNode(BinaryNode, ProgramNode):
     def __init__(self, left_expression, right_expression, label):
         super().__init__(left_expression, right_expression)
         self.label = label
+        self.seen_labels.append(label)
 
     def to_cover_graph(self):
         cover_graph = self.right_expression.to_cover_graph()
@@ -335,6 +343,7 @@ class IfNode(Node, ProgramNode):
         self.then_expression = then_expression
         self.else_expression = else_expression
         self.label = label
+        self.seen_labels.append(label)
 
     def to_cover_graph(self):
         cover_graph_1 = self.then_expression.to_cover_graph()

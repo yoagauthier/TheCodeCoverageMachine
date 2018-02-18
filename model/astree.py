@@ -19,7 +19,7 @@ class ASTree(object):
 
         # Parse program
         self.root_node = ProgramParser(self.tokenized_program).parse()
-        if not self.root_node.is_program():
+        if not (self.root_node.is_program() and self.root_node.is_well_labelled()):
             raise ParsingError
 
     def is_well_formed(self):
