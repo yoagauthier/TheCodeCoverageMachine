@@ -49,13 +49,8 @@ class CoverGraph(object):
         # is a set of variables
         paths = []
         for test_set in test_sets:
-            paths += self.get_path(test_set)
-        print("PATHS", paths)
-        return paths
-
-    def get_all_nodes(self):
-        """Returns all the nodes of the cover graph"""
-        raise NotImplementedError
+            paths.append(self.get_path(test_set))
+        return paths  # paths is like [[vertex1, vertex2, ...], [vertex1, vertex4, ...], ...]
 
     def __str__(self):
         return '\n'.join([str(edge) for edge in self.edges])
@@ -68,10 +63,13 @@ class Vertex(object):
         self.label = label
         self.operation = operation
 
-    def execute_step(self, var):
-        # execute the operation
-        pass
-        # verify that the condition is fullfilled and return the value of the next variable
+    def get_edges(self, cover_graph):
+        """Returns a list of all the edges connected to this vertex"""
+        L = []
+        for edge in cover_graph.edges:
+            if edge.root_vertex == self or edge.child_vertex == self:
+                L.append(edge)
+        return L
 
     def __str__(self):
         return '{}'.format(self.label)
