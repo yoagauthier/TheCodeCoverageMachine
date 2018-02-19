@@ -1,4 +1,4 @@
-from model.criteria import TA
+from model.criteria import TA, TD
 from model.astree import ASTree
 
 if __name__ == "__main__":
@@ -11,6 +11,6 @@ if __name__ == "__main__":
     CG = tree.to_cover_graph()
     CG.get_all_paths(test_sets)
 
-    criterias = [TA()]
+    criterias = [TA(), TD()]
     for criteria in criterias:
         print(criteria, " : ", criteria.check(CG, test_sets))

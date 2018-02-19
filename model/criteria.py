@@ -1,5 +1,5 @@
 from model.cover_graph import Vertex
-from model.nodes import AssignmentNode
+from model.nodes import AssignmentNode, IfNode, WhileNode
 
 
 class Criteria(object):
@@ -40,3 +40,27 @@ class TA(Criteria):
 
     def __repr__(self):
         return "TA - All assignments"
+
+
+class TD(Criteria):
+    """
+    Get all the edges of type "while" or "if" and checks that they are evaluated
+    """
+
+    def check_criteria_against_paths(self, cover_graph, execution_paths):
+        decided = []
+        for path in execution_paths:
+            for vertex in path:
+                edges = vertex.get_edges(cover_graph)
+                for edge in edges:
+                    if isinstance(edge.operation, IfNode) or isinstance(edge.operation, WhileNode):
+                        decided.append(edge)
+
+        for edge in cover_graph.edges:
+            if isinstance(edge.operation, IfNode) or isinstance(edge.operation, WhileNode) \
+                    and edge not in decided:
+                return False
+        return True
+
+    def __repr__(self):
+        return "TD - All decisions"
