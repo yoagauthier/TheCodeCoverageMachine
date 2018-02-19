@@ -1,4 +1,4 @@
-from model.criteria import TA, TD
+from model.criteria import TA, TD, kTC
 from model.astree import ASTree
 
 if __name__ == "__main__":
@@ -9,8 +9,7 @@ if __name__ == "__main__":
     tree = ASTree('Examples/exemple.txt')
     test_sets = [{'X': 12}]
     CG = tree.to_cover_graph()
-    CG.get_all_paths(test_sets)
 
-    criterias = [TA(), TD()]
+    criterias = [TA(), TD(), kTC(2)]
     for criteria in criterias:
         print(criteria, " : ", criteria.check(CG, test_sets))

@@ -64,3 +64,16 @@ class TD(Criteria):
 
     def __repr__(self):
         return "TD - All decisions"
+
+
+class kTC(Criteria):
+
+    def __init__(self, k=1):
+        self.k = k
+
+    def check_criteria_against_paths(self, cover_graph, execution_path):
+        for path in execution_paths:
+
+
+    def __repr__(self):
+        return """k - TC - All {} paths""".format(self.k)

@@ -55,6 +55,36 @@ class CoverGraph(object):
             paths.append(self.get_path(test_set))
         return paths  # paths is like [[vertex1, vertex2, ...], [vertex1, vertex4, ...], ...]
 
+    def get_all_k_paths(self, k):
+
+        # double TODO : goshs it's false ... the covering tree is not necessarly
+        # of at least k depth
+        # # TODO : not optimal, but it's late, so I'll do the easy way
+        # # building a covering tree from graph, the get all the k paths from that tree
+        # L = []  # list of edges
+        # T = []  # tree we're building, containing a list of edges
+        # visited = set()
+        # visited.append(self.root_vertex)
+        # for edge in self.root_vertex.get_edges(self):
+        #     L.append(edge)
+        # while L:
+        #     edge = L.pop()
+        #     # if deep < k:
+        #     #     edges = vertex.get_edges(self)
+        #     #     for edge in edges:
+        #     #         new_v = edge.child_vertex
+        #     #         if new_v not in visited:
+        #     #             visited.append(new_v)
+        #     #             L.append((new_v, deep + 1))
+        #     if edge.child_vertex not in visited:
+        #         T.append(edge)
+        #         visited.append(edge.child_vertex)
+        #         for e in edge.child_vertex.get_edges(self):
+        #             L.append(e)
+        #
+        return []
+
+
     def __str__(self):
         return '\n'.join([str(edge) for edge in self.edges])
 
