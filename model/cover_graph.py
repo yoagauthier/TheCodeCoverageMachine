@@ -1,3 +1,6 @@
+from model.nodes import ExecutionError
+
+
 class CoverGraph(object):
     def __init__(self, root_vertex=None, end_vertex=None, vertices=[], edges=[]):
         self.root_vertex = root_vertex
@@ -39,7 +42,7 @@ class CoverGraph(object):
                     values = edge.eval(values)
                     break
             if not out_edge:
-                raise "Programm non executable"
+                raise ExecutionError
             vertex = out_edge.child_vertex
             L.append(vertex)
         return L  # list of vertices that we've been through
