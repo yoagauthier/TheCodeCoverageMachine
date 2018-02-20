@@ -67,13 +67,25 @@ class TD(Criteria):
 
 
 class kTC(Criteria):
+    """
+    We get all the k paths from the cover graph (all the "small paths") and
+    check if they are in the execution_paths we got from execution.
+    """
 
     def __init__(self, k=1):
         self.k = k
 
-    def check_criteria_against_paths(self, cover_graph, execution_path):
+    def check_criteria_against_paths(self, cover_graph, execution_paths):
+        k_paths = []
+        # we get all the possible paths
         for path in execution_paths:
+            k_paths.append(path[:self.k])
 
+        # if in all the k paths from the cover graph
+        for path in cover_graph.get_all_k_paths(self.k):
+            if path not in k_paths:
+                return False
+        return True
 
     def __repr__(self):
         return """k - TC - All {} paths""".format(self.k)

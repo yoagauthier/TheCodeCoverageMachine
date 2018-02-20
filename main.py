@@ -10,6 +10,6 @@ if __name__ == "__main__":
     test_sets = [{'X': 12}]
     CG = tree.to_cover_graph()
 
-    criterias = [TA(), TD(), kTC(2)]
+    criterias = [TA(), TD(), kTC(5)]
     for criteria in criterias:
         print(criteria, " : ", criteria.check(CG, test_sets))
