@@ -4,6 +4,8 @@ Date: 21/02/2018
 
 This file defines all the logic for criteria classes.
 """
+from model.nodes import BooleanOperatorNode, BooleanComparatorNode
+from model.error import ExecutionError
 
 
 class Criteria(object):
@@ -81,3 +83,44 @@ class kTC(Criteria):
 
     def __repr__(self):
         return """k - TC - All {} paths""".format(self.k)
+
+
+class TC(Criteria):
+    """
+    We get all the conditions from the cover graph (get all decisions, then
+    extract conditions from these decisions) and check if they are in some of
+    the condition of the execution_paths we got from execution.
+    """
+
+    def check_criteria_against_paths(self, cover_graph, execution_paths):
+        # get all conditions in cover graph
+        decisions = [edge.condition for edge in cover_graph.edges]
+        conditions = []
+        for subdecision in decisions:
+            if isinstance(subdecision, (BooleanOperatorNode, BooleanComparatorNode)):
+                self.get_conditions(subdecision, conditions)
+
+        # get conditions from execution_paths
+        exec_decisions = [edge.condition for path in execution_paths for vertex in path for edge in vertex.get_edges(cover_graph)]
+        exec_conditions = []
+        for subdecision in exec_decisions:
+            if isinstance(subdecision, (BooleanOperatorNode, BooleanComparatorNode)):
+                self.get_conditions(subdecision, exec_conditions)
+
+        for condition in conditions:
+            # check that the condition is validated somewhere
+            if condition not in exec_conditions:
+                return False
+        return True
+
+    def get_conditions(self, decision, conditions):
+        if isinstance(decision, BooleanComparatorNode):
+            conditions.append(decision)
+        elif isinstance(decision, BooleanOperatorNode):
+            self.get_conditions(decision.left_expression, conditions)
+            self.get_conditions(decision.right_expression, conditions)
+        else:
+            raise ExecutionError
+
+    def __repr__(self):
+        return """TC - All conditions"""
