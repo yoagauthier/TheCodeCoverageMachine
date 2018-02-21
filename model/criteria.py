@@ -1,17 +1,21 @@
-from model.cover_graph import Vertex
+"""
+Autors: Yoann Gauthier and Thibaut Seys
+Date: 21/02/2018
+
+This file defines all the logic for criteria classes.
+"""
 from model.nodes import AssignmentNode, IfNode, WhileNode
 
 
 class Criteria(object):
 
     def check(self, cover_graph, test_sets):
+        """Generate all paths from test_sets list and then compare different paths."""
         execution_paths = cover_graph.get_all_paths(test_sets)
         return self.check_criteria_against_paths(cover_graph, execution_paths)
 
     def check_criteria_against_paths(self, cover_graph, execution_paths):
-        """
-        Should return True or False depending on the criteria
-        """
+        """Should return True or False depending on the criteria"""
         raise NotImplementedError
 
     def __repr__(self):
@@ -19,10 +23,8 @@ class Criteria(object):
 
 
 class TA(Criteria):
-    """
-    Get all the labels of the cover graph, and checks if they are all defined
-    in the nodes of the programm
-    """
+    """Get all the labels of the cover graph, and checks if they are all defined
+    in the nodes of the programm"""
 
     def check_criteria_against_paths(self, cover_graph, execution_paths):
         assigned = []
@@ -43,9 +45,7 @@ class TA(Criteria):
 
 
 class TD(Criteria):
-    """
-    Get all the edges of type "while" or "if" and checks that they are evaluated
-    """
+    """Get all the edges of type "while" or "if" and checks that they are evaluated"""
 
     def check_criteria_against_paths(self, cover_graph, execution_paths):
         decided = []
@@ -67,10 +67,8 @@ class TD(Criteria):
 
 
 class kTC(Criteria):
-    """
-    We get all the k paths from the cover graph (all the "small paths") and
-    check if they are in the execution_paths we got from execution.
-    """
+    """We get all the k paths from the cover graph (all the "small paths") and
+    check if they are in the execution_paths we got from execution."""
 
     def __init__(self, k=1):
         self.k = k

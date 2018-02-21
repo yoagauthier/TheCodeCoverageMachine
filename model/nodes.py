@@ -1,17 +1,21 @@
+"""
+Autors: Yoann Gauthier and Thibaut Seys
+Date: 21/02/2018
+
+This file defines all different nodes used in abstract syntax tree construction.
+"""
 from pprint import pformat
 
-from model.cover_graph import CoverGraph, Edge, Vertex
+from model.control_flow_graph import ControlFlowGraph, Edge, Vertex
+from model.error import ExecutionError
 from model.tokenizer import Token
-
-
-class ExecutionError(Exception):
-    pass
 
 
 class Node(object):
     seen_labels = []
 
     def is_arithmetic(self):
+        """Decide if the current node is an arithmetic node"""
         if isinstance(self, VariableNode):
             return self.is_variable()
         elif isinstance(self, NumberNode):
@@ -22,6 +26,7 @@ class Node(object):
             return False
 
     def is_boolean(self):
+        """Decide if the current node is a boolean node"""
         if isinstance(self, BooleanNode):
             return self.is_boolean_variable()
         elif isinstance(self, BooleanComparatorNode):
@@ -34,6 +39,7 @@ class Node(object):
             return False
 
     def is_program(self):
+        """Decide if the current node is a program node"""
         if isinstance(self, SkipNode):
             return True
         elif isinstance(self, AssignmentNode):
@@ -52,18 +58,22 @@ class Node(object):
             return False
 
     def is_well_labelled(self):
+        """Check if all labels are different."""
         return len(self.seen_labels) == len(set(self.seen_labels))
 
     def get_variables(self, variables=set()):
         raise NotImplementedError
 
     def eval(self, env):
+        """Return the updated environments variables"""
         raise NotImplementedError
 
     def to_dict(self):
+        """Transform the current to a dict object"""
         raise NotImplementedError
 
     def __str__(self):
+        """Return the dict object prettyfied"""
         return pformat(self.to_dict())
 
 
@@ -74,6 +84,7 @@ class UnaryNode(Node):
 
 class VariableNode(UnaryNode):
     def is_variable(self):
+        """Check if the current node is a variable node"""
         return type(self.expression) == str and self.expression not in Token.key_words
 
     def eval(self, env):
@@ -91,6 +102,7 @@ class VariableNode(UnaryNode):
 
 class NumberNode(UnaryNode):
     def is_number(self):
+        """Check if the current node is contains a number"""
         return type(self.expression) == int
 
     def eval(self, env):
@@ -117,6 +129,7 @@ class BinaryNode(Node):
 
 
 class ArithmeticOperatorNode(BinaryNode):
+    """Parent class for arthmetic operator node (+, -, *, /)"""
     def to_dict(self):
         return {
             'arithmetic operator': self.operator,
@@ -155,6 +168,7 @@ class DivideNode(ArithmeticOperatorNode):
 
 class BooleanNode(UnaryNode):
     def is_boolean_variable(self):
+        """Check if the current node contains a boolean value (true or false)"""
         return type(self.expression) == str and self.expression in Token.boolean_key_words
 
     def eval(self, env):
@@ -168,6 +182,7 @@ class BooleanNode(UnaryNode):
 
 
 class BooleanComparatorNode(BinaryNode):
+    """Parent class for boolean comparator (<, <=, >, >=, =)"""
     def to_dict(self):
         return {
             'comparator': self.comparator,
@@ -212,6 +227,7 @@ class EqualNode(BooleanComparatorNode):
 
 
 class BooleanOperatorNode(BinaryNode):
+    """Parent class for boolean operator node (and or)"""
     def to_dict(self):
         return {
             'boolean operator': self.operator,
@@ -246,7 +262,8 @@ class NotNode(UnaryNode):
 
 
 class ProgramNode(object):
-    def to_cover_graph(self):
+    """Works as an interface that force to implement the conversion to a control_flow_graph"""
+    def to_control_flow_graph(self):
         raise NotImplementedError
 
 
@@ -256,11 +273,11 @@ class SkipNode(UnaryNode, ProgramNode):
         self.label = label
         self.seen_labels.append(label)
 
-    def to_cover_graph(self):
+    def to_control_flow_graph(self):
         root_vertex = Vertex(self.label, 'skip')
         end_vertex = Vertex('_', 'end')
         edge = Edge(root_vertex, end_vertex, BooleanNode('true'), self)
-        return CoverGraph(root_vertex, end_vertex, [root_vertex, end_vertex], [edge])
+        return ControlFlowGraph(root_vertex, end_vertex, [root_vertex, end_vertex], [edge])
 
     def eval(self, env):
         return env
@@ -278,11 +295,11 @@ class AssignmentNode(BinaryNode, ProgramNode):
         self.label = label
         self.seen_labels.append(label)
 
-    def to_cover_graph(self):
+    def to_control_flow_graph(self):
         root_vertex = Vertex(self.label, 'assignment')
         end_vertex = Vertex('_', 'end')
         edge = Edge(root_vertex, end_vertex, BooleanNode('true'), self)
-        return CoverGraph(root_vertex, end_vertex, [root_vertex, end_vertex], [edge])
+        return ControlFlowGraph(root_vertex, end_vertex, [root_vertex, end_vertex], [edge])
 
     def eval(self, env):
         env[self.left_expression.expression] = self.right_expression.eval(env)
@@ -298,9 +315,9 @@ class AssignmentNode(BinaryNode, ProgramNode):
 
 
 class SequenceNode(BinaryNode, ProgramNode):
-    def to_cover_graph(self):
-        cover_graph_1 = self.left_expression.to_cover_graph()
-        cover_graph_2 = self.right_expression.to_cover_graph()
+    def to_control_flow_graph(self):
+        cover_graph_1 = self.left_expression.to_control_flow_graph()
+        cover_graph_2 = self.right_expression.to_control_flow_graph()
         root_vertex = cover_graph_1.root_vertex
         end_vertex = cover_graph_2.end_vertex
         vertices = cover_graph_1.vertices + cover_graph_2.vertices
@@ -309,7 +326,7 @@ class SequenceNode(BinaryNode, ProgramNode):
             cover_graph_1.renamed_edges(cover_graph_1.end_vertex, cover_graph_2.root_vertex) +
             cover_graph_2.edges
         )
-        return CoverGraph(root_vertex, end_vertex, vertices, edges)
+        return ControlFlowGraph(root_vertex, end_vertex, vertices, edges)
 
     def eval(self, env):
         env = self.left_expression.eval(env)
@@ -328,8 +345,8 @@ class WhileNode(BinaryNode, ProgramNode):
         self.label = label
         self.seen_labels.append(label)
 
-    def to_cover_graph(self):
-        cover_graph = self.right_expression.to_cover_graph()
+    def to_control_flow_graph(self):
+        cover_graph = self.right_expression.to_control_flow_graph()
         root_vertex = Vertex(self.label, 'while')
         end_vertex = cover_graph.end_vertex
         vertices = [root_vertex] + cover_graph.vertices
@@ -347,7 +364,7 @@ class WhileNode(BinaryNode, ProgramNode):
                 SkipNode('_', self.label)
             )
         ]
-        return CoverGraph(root_vertex, end_vertex, vertices, edges)
+        return ControlFlowGraph(root_vertex, end_vertex, vertices, edges)
 
     def eval(self, env):
         if self.left_expression.eval(env):
@@ -370,9 +387,9 @@ class IfNode(Node, ProgramNode):
         self.label = label
         self.seen_labels.append(label)
 
-    def to_cover_graph(self):
-        cover_graph_1 = self.then_expression.to_cover_graph()
-        cover_graph_2 = self.else_expression.to_cover_graph()
+    def to_control_flow_graph(self):
+        cover_graph_1 = self.then_expression.to_control_flow_graph()
+        cover_graph_2 = self.else_expression.to_control_flow_graph()
         root_vertex = Vertex(self.label, 'if')
         end_vertex = cover_graph_2.end_vertex
         vertices = [root_vertex] + cover_graph_1.vertices[:-1] + cover_graph_2.vertices
@@ -391,7 +408,7 @@ class IfNode(Node, ProgramNode):
                 SkipNode('_', cover_graph_2.root_vertex.label)
             )
         ] + cover_graph_2.edges
-        return CoverGraph(root_vertex, end_vertex, vertices, edges)
+        return ControlFlowGraph(root_vertex, end_vertex, vertices, edges)
 
     def eval(self, env):
         if self.condition_expression.eval(env):

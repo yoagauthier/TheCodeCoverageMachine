@@ -1,6 +1,16 @@
+"""
+Autors: Yoann Gautier and Thibaut Seys
+Date: 21/02/2018
+
+This file defines the Tokenizer class which is used to tokenized a given source code. The Token
+class defines the Token class as well which contains some control functions for token.
+"""
+
+
 class Tokenizer(object):
     @staticmethod
     def clear(text_lines):
+        """This method clear comments, spaces and tabulations from raw code"""
         if text_lines == []:
             return []
         elif text_lines[0] == '':
@@ -14,6 +24,7 @@ class Tokenizer(object):
 
     @staticmethod
     def tokenize(text):
+        """Tokenenize text from raw source code"""
         tokenized_text = []
         current_token = ''
 
@@ -71,14 +82,17 @@ class Token(object):
 
     @staticmethod
     def is_identifier(token):
+        """Check if token is an identifier"""
         return token.isalpha() and token not in Token.key_words
 
     @staticmethod
     def is_number(token):
+        """Check if token is a number"""
         return type(token) == int
 
     @staticmethod
     def opposite_bracket(token):
+        """Return opposite bracket if current token is a bracket"""
         if token == '(':
             return ')'
         elif token == ')':
@@ -88,18 +102,21 @@ class Token(object):
         elif token == '}':
             return '{'
         else:
-            return 'Not a bracket'
+            return None
 
     @staticmethod
     def is_opening_bracket(token):
+        """Return True if token is an opening bracket"""
         return token in Token.opening_brackets
 
     @staticmethod
     def is_closing_bracket(token):
+        """Return True if token is a closing bracket"""
         return token in Token.closing_brackets
 
     @staticmethod
     def number(token):
+        """Return token as a number if it is one else we don't change anything"""
         try:
             return int(token)
         except ValueError:

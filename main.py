@@ -1,5 +1,5 @@
+from model.abstract_syntax_tree import ASTree
 from model.criteria import TA, TD, kTC
-from model.astree import ASTree
 
 if __name__ == "__main__":
 
@@ -8,7 +8,7 @@ if __name__ == "__main__":
 
     tree = ASTree('Examples/exemple.txt')
     test_sets = [{'X': 12}]
-    CG = tree.to_cover_graph()
+    CG = tree.to_control_flow_graph()
 
     criterias = [TA(), TD(), kTC(5)]
     for criteria in criterias:

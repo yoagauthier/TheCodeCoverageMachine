@@ -1,3 +1,10 @@
+"""
+Autors: Yoann Gauthier and Thibaut Seys
+Date: 21/02/2018
+
+This file defines ProgramParser class to parse from tokenized code.
+"""
+from model.error import ParsingError
 from model.nodes import (
     AddNode,
     BooleanNode,
@@ -21,10 +28,6 @@ from model.nodes import (
     IfNode
 )
 from model.tokenizer import Token
-
-
-class ParsingError(Exception):
-    pass
 
 
 class ProgramParser(object):
@@ -52,6 +55,7 @@ class ProgramParser(object):
         self.end = len(tokens)
 
     def parse(self):
+        """Method to call to parse an entire source code"""
         self.index = 0
         self.tokens = ['{'] + self.tokens + ['}']
         self.end = len(self.tokens)
@@ -60,6 +64,7 @@ class ProgramParser(object):
         return to_return
 
     def parse_program(self, previous_nodes=[], expected=[]):
+        """Parsing logic for program instructions"""
         self._check_end()
         label = self._parse_label()
         current_token = self.tokens[self.index]
@@ -128,6 +133,7 @@ class ProgramParser(object):
         raise ParsingError
 
     def parse_arithmetic(self, previous_nodes=[], expected=[]):
+        """Parsing logic for arithmetic expression"""
         self._check_end()
         current_token = self.tokens[self.index]
         self.index += 1
@@ -159,6 +165,7 @@ class ProgramParser(object):
         raise ParsingError
 
     def parse_boolean(self, previous_nodes=[], expected=[]):
+        """Parsing logic for boolean expression"""
         try:
             current_index = self.index
             current_node = self.parse_arithmetic()
@@ -213,19 +220,23 @@ class ProgramParser(object):
             raise ParsingError
 
     def _check_end(self):
+        """Check if we are at the end of the token list"""
         if self.index == self.end:
             raise ParsingError
 
     def _check_not_empty(self, to_check):
+        """Check if given variable is empty"""
         if to_check == []:
             raise ParsingError
 
     def _parse_if_expected_not_empty(self, expected, current_node, previous_nodes, parsing_func):
+        """Parsing logic when we expect expected not empty"""
         if expected == []:
             return current_node
         return parsing_func([current_node] + previous_nodes, expected)
 
     def _parse_closing_bracket(self, bracket, previous_nodes, expected, parsing_func):
+        """Parsing logic when it is a closing bracket"""
         if expected == [] or previous_nodes == []:
             raise ParsingError
         elif expected[0] == bracket:
@@ -236,6 +247,7 @@ class ProgramParser(object):
         raise ParsingError
 
     def _parse_label(self):
+        """Util function to parse label"""
         label = self.tokens[self.index]
         if not Token.is_number(label):
             return None
