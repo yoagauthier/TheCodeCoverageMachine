@@ -1,11 +1,8 @@
 from pprint import pformat
 
 from model.cover_graph import CoverGraph, Edge, Vertex
+from model.error import ExecutionError
 from model.tokenizer import Token
-
-
-class ExecutionError(Exception):
-    pass
 
 
 class Node(object):
