@@ -55,6 +55,26 @@ class CoverGraph(object):
             paths.append(self.get_path(test_set))
         return paths  # paths is like [[vertex1, vertex2, ...], [vertex1, vertex4, ...], ...]
 
+    # inspired from https://www.geeksforgeeks.org/find-paths-given-source-destination/
+    # except we do not need to mark visited vertices as we only got down in the graph
+    def _get_all_k_paths_util(self, start_vertex, end_vertex, k, current_path, all_paths):
+        current_path.append(start_vertex)
+        if len(current_path) > k:
+            pass
+        elif start_vertex == end_vertex:
+            all_paths.append(current_path)
+        else:
+            for edge in start_vertex.get_child_edges(self):
+                self._get_all_k_paths_util(edge.child_vertex, end_vertex, k, current_path, all_paths)
+
+        current_path.pop()
+
+    def get_all_k_paths(self, k):
+        all_paths = []
+        current_path = []
+        self._get_all_k_paths_util(self.root_vertex, self.end_vertex, k, current_path, all_paths)
+        return all_paths
+
     def __str__(self):
         return '\n'.join([str(edge) for edge in self.edges])
 
@@ -71,6 +91,15 @@ class Vertex(object):
         L = []
         for edge in cover_graph.edges:
             if edge.root_vertex == self or edge.child_vertex == self:
+                L.append(edge)
+        return L
+
+    def get_child_edges(self, cover_graph):
+        """Returns a list of all the child edges connected to this vertex"""
+        L = []
+        for edge in cover_graph.edges:
+            # self is root of the edge, so the edge is child of self
+            if edge.root_vertex == self:
                 L.append(edge)
         return L
 
