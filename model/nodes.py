@@ -54,6 +54,9 @@ class Node(object):
     def is_well_labelled(self):
         return len(self.seen_labels) == len(set(self.seen_labels))
 
+    def get_variables(self, variables=set()):
+        raise NotImplementedError
+
     def eval(self, env):
         raise NotImplementedError
 
@@ -82,6 +85,9 @@ class VariableNode(UnaryNode):
     def to_dict(self):
         return {'variable': self.expression}
 
+    def get_variables(self, variables=set()):
+        return variables | set(self.expression)
+
 
 class NumberNode(UnaryNode):
     def is_number(self):
@@ -93,11 +99,21 @@ class NumberNode(UnaryNode):
     def to_dict(self):
         return {'number': self.expression}
 
+    def get_variables(self, variables=set()):
+        return variables
+
 
 class BinaryNode(Node):
     def __init__(self, left_expression, right_expression):
         self.left_expression = left_expression
         self.right_expression = right_expression
+
+    def get_variables(self, variables=set()):
+        return (
+            variables |
+            self.left_expression.get_variables(variables) |
+            self.right_expression.get_variables(variables)
+        )
 
 
 class ArithmeticOperatorNode(BinaryNode):
@@ -146,6 +162,9 @@ class BooleanNode(UnaryNode):
 
     def to_dict(self):
         return {'boolean': self.expression}
+
+    def get_variables(self, variables=set()):
+        return variables
 
 
 class BooleanComparatorNode(BinaryNode):
@@ -222,6 +241,9 @@ class NotNode(UnaryNode):
     def to_dict(self):
         return {'not': self.expression.to_dict()}
 
+    def get_variables(self, variables=set()):
+        return variables | self.expression.get_variables()
+
 
 class ProgramNode(object):
     def to_cover_graph(self):
@@ -245,6 +267,9 @@ class SkipNode(UnaryNode, ProgramNode):
 
     def to_dict(self):
         return {'{}: skip'.format(self.label): self.expression}
+
+    def get_variables(self, variables=set()):
+        return variables
 
 
 class AssignmentNode(BinaryNode, ProgramNode):
@@ -379,3 +404,11 @@ class IfNode(Node, ProgramNode):
             'then': self.then_expression.to_dict(),
             'else': self.else_expression.to_dict()
         }
+
+    def get_variables(self, variables=set()):
+        return (
+            variables |
+            self.condition_expression.get_variables(variables) |
+            self.else_expression.get_variables(variables) |
+            self.then_expression.get_variables(variables)
+        )

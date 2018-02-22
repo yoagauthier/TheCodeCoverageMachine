@@ -75,6 +75,41 @@ class CoverGraph(object):
         self._get_all_k_paths_util(self.root_vertex, self.end_vertex, k, current_path, all_paths)
         return all_paths
 
+    def get_labels(self, operations=['assignment', 'skip', 'if', 'while']):
+        return [vertex.label for vertex in self.vertices if vertex.operation in operations]
+
+    def get_variables(self):
+        to_return = set()
+        for edge in self.edges:
+            to_return |= edge.get_variables()
+        return to_return
+
+    def get_def_variables(self, vertex):
+        to_return = set()
+        for edge in self.edges:
+            if type(vertex) == int:
+                if edge.root_vertex.operation == 'assignment' and edge.root_vertex.label == vertex:
+                    to_return |= edge.operation.left_expression.get_variables()
+            else:
+                if edge.root_vertex.operation == 'assignment' and edge.root_vertex == vertex:
+                    to_return |= edge.operation.left_expression.get_variables()
+        return to_return
+
+    def get_ref_variables(self, vertex):
+        to_return = set()
+        for edge in self.edges:
+            if type(vertex) == int:
+                if edge.root_vertex.label == vertex:
+                    if edge.root_vertex.operation == 'assignment':
+                        to_return |= edge.operation.right_expression.get_variables()
+                    to_return |= edge.condition.get_variables()
+            else:
+                if edge.root_vertex == vertex:
+                    if edge.root_vertex.operation == 'assignment':
+                        to_return |= edge.operation.right_expression.get_variables()
+                    to_return |= edge.condition.get_variables()
+        return to_return
+
     def __str__(self):
         return '\n'.join([str(edge) for edge in self.edges])
 
@@ -124,6 +159,9 @@ class Edge(object):
             return self.operation.eval(values)
         else:
             return None
+
+    def get_variables(self):
+        return self.condition.get_variables() | self.operation.get_variables()
 
     def __str__(self):
         return '{} --({}/{})--> {}'.format(
