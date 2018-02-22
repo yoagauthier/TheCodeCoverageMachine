@@ -1,7 +1,27 @@
-from model.nodes import ExecutionError
+"""
+Autors: Yoann Gauthier and Thibaut Seys
+Date: 21/02/2018
+
+This file defines all logic needed for control flow graph object
+"""
+from model.error import ExecutionError
 
 
-class CoverGraph(object):
+class ControlFlowGraph(object):
+    """
+    This class represents all the logic to represent control flow graph.
+    + properties:
+        - root_vertex: the source vertex from which the porgram will start
+        - end_certex: the target vertex from which the program will end
+        - vertices: all vertices stored in a list
+        - edges: all edges stored in a list
+    + methods:
+        - renamed_edges: changes the old vertex by the new vertex in edges
+        - get_path: returns the node list for the given starting environment
+        - get_all_paths: returns the node list for the given starting environment list
+        - get_all_k_paths: returns all the path with length if k
+    """
+
     def __init__(self, root_vertex=None, end_vertex=None, vertices=[], edges=[]):
         self.root_vertex = root_vertex
         self.end_vertex = end_vertex
@@ -9,6 +29,7 @@ class CoverGraph(object):
         self.edges = edges
 
     def renamed_edges(self, old_vertex, new_vertex):
+        """Return edges with old_vertex replaced by new_vertex. We do not affect self.edges"""
         new_edges = []
         for edge in self.edges:
             edge.root_vertex = (
@@ -25,10 +46,11 @@ class CoverGraph(object):
         return new_edges
 
     def get_path(self, test_set):
-        # on part de la root node
-        # on prend pour chaque node la successeur, en vérifiant la condition
-        # on s'arrête à la node finale
-        # return  path, qui est une liste d'edge et de nodes
+        """
+        Returns the vertex list we get from execution given test_set as input.
+        Summary: We start from root_vertex and we take the succesor which respect the condition. We
+        stops arrived at the end_vertex.
+        """
         L = []
         values = test_set
         vertex = self.root_vertex
@@ -48,16 +70,21 @@ class CoverGraph(object):
         return L  # list of vertices that we've been through
 
     def get_all_paths(self, test_sets):
-        # test set should like [{var1: val1, var2: val2, ...}, ...], each dict
-        # is a set of variables
+        """
+        Returns all_paths from test_sets.
+        test_sets should like [{var1: val1, var2: val2, ...}, ...], each dict is a set of variables
+        """
         paths = []
         for test_set in test_sets:
             paths.append(self.get_path(test_set))
         return paths  # paths is like [[vertex1, vertex2, ...], [vertex1, vertex4, ...], ...]
 
-    # inspired from https://www.geeksforgeeks.org/find-paths-given-source-destination/
-    # except we do not need to mark visited vertices as we only got down in the graph
     def _get_all_k_paths_util(self, start_vertex, end_vertex, k, current_path, all_paths):
+        """
+        Util function that delegates logic from get_all_k_paths.
+        inspired from https://www.geeksforgeeks.org/find-paths-given-source-destination/
+        except we do not need to mark visited vertices as we only got down in the graph
+        """
         current_path.append(start_vertex)
         if len(current_path) > k:
             pass
@@ -70,6 +97,7 @@ class CoverGraph(object):
         current_path.pop()
 
     def get_all_k_paths(self, k):
+        """Returns all k paths of the cover path"""
         all_paths = []
         current_path = []
         self._get_all_k_paths_util(self.root_vertex, self.end_vertex, k, current_path, all_paths)
@@ -115,6 +143,15 @@ class CoverGraph(object):
 
 
 class Vertex(object):
+    """
+    Vertex logic for control flow graph.
+    + properties:
+        - label: the label of the vertex (should be int or '_')
+        - operation: should be in possible_operation
+    + methods:
+        - get_edges: return all edges that contain the vertex
+        - get_child_edges: return a list of all child edges connected to this vertex
+    """
     possible_operations = ['assignment', 'skip', 'if', 'while', 'end']
 
     def __init__(self, label, operation):

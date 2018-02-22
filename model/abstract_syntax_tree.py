@@ -1,10 +1,19 @@
-from model.parser import ParsingError, ProgramParser
+"""
+Autors: Yoann Gauthier and Thibaut Seys
+Date: 21/02/2018
+
+This file defines all the logic for the abstract syntax tree.
+"""
+from model.error import ParsingError
+from model.parser import ProgramParser
 from model.tokenizer import Token, Tokenizer
 
 
 class ASTree(object):
+    """This class defines an abstract syntax tree"""
 
     def __init__(self, file_path):
+        """Create the abstract syntax tree from the given filepath"""
         # Loading raw content from file path
         with open(file_path, 'r') as program_file:
             self.raw_program = program_file.read()
@@ -23,6 +32,8 @@ class ASTree(object):
             raise ParsingError
 
     def is_well_formed(self):
+        """This function checks if the tokenized program opens and closes its brackets the correct
+        way"""
         pile = []
         for token in self.tokenized_program:
             if Token.is_opening_bracket(token):
@@ -37,13 +48,17 @@ class ASTree(object):
         return pile == []
 
     def to_dict(self):
+        """Returns the tree represented as a dict object."""
         return self.root_node.to_dict()
 
     def __str__(self):
+        """String representation"""
         return self.root_node.__str__()
 
-    def to_cover_graph(self):
-        return self.root_node.to_cover_graph()
+    def to_control_flow_graph(self):
+        """Returns the cover graph from this abstract syntax tree."""
+        return self.root_node.to_control_flow_graph()
 
     def eval(self, env={}):
+        """Evaluate the program from the given environment input."""
         return self.root_node.eval(env)
