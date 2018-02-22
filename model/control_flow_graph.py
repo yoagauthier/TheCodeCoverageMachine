@@ -89,7 +89,7 @@ class ControlFlowGraph(object):
         if len(current_path) > k:
             pass
         elif start_vertex == end_vertex:
-            all_paths.append(current_path)
+            all_paths.append(current_path.copy())
         else:
             for edge in start_vertex.get_child_edges(self):
                 self._get_all_k_paths_util(edge.child_vertex, end_vertex, k, current_path, all_paths)
@@ -175,8 +175,8 @@ class Vertex(object):
                 L.append(edge)
         return L
 
-    def __str__(self):
-        return '{}'.format(self.label)
+    def __repr__(self):
+        return '<Vertex with label {}>'.format(self.label)
 
 
 class Edge(object):
@@ -202,8 +202,8 @@ class Edge(object):
 
     def __str__(self):
         return '{} --({}/{})--> {}'.format(
-            self.root_vertex,
+            self.root_vertex.label,
             self.condition,
             self.operation,
-            self.child_vertex,
+            self.child_vertex.label,
         )

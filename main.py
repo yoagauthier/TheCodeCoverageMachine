@@ -16,4 +16,5 @@ if __name__ == "__main__":
 
     criterias = [TA(), TD(), kTC(5), TC()]
     for criteria in criterias:
-        print(criteria, " : ", criteria.check(CG, deepcopy(test_sets)))
+        criteria.check(CG, deepcopy(test_sets))
+        print(criteria)

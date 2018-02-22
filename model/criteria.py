@@ -10,6 +10,10 @@ from model.error import ExecutionError
 
 class Criteria(object):
 
+    def __init__(self):
+        self.to_cover = []
+        self.covered = []
+
     def check(self, control_flow_graph, test_sets):
         """Generate all paths from test_sets list and then compare different paths."""
         execution_paths = control_flow_graph.get_all_paths(test_sets)
@@ -22,44 +26,56 @@ class Criteria(object):
     def __repr__(self):
         return "Criteria Type"
 
+    def __str__(self):
+        to_return = self.__repr__()
+        to_return += '\n======================================\n'
+        try:
+            to_return += 'Overall coverage : {:.2f}%'.format(
+                100 * len(self.covered) / len(self.to_cover)
+            )
+        except ZeroDivisionError:
+            to_return += 'Overall coverage : 0.00%'
+        for elt in self.to_cover:
+            if elt in self.covered:
+                to_return += '\nElement {} -- o'.format(elt)
+            else:
+                to_return += '\nElement {} -- x'.format(elt)
+        return to_return
+
 
 class TA(Criteria):
     """Get all the labels of the cover graph, and checks if they are all defined
     in the nodes of the programm"""
 
     def check_criteria_against_paths(self, control_flow_graph, execution_paths):
-        assigned = []
+        for vertex in control_flow_graph.vertices:
+            if vertex.operation == 'assignment':
+                self.to_cover.append(vertex)
+
         for path in execution_paths:
             for vertex in path:
                 if vertex.operation == 'assignment':
-                    assigned.append(vertex)
-
-        for vertex in control_flow_graph.vertices:
-            if vertex.operation == 'assignment' and vertex not in assigned:
-                return False
-        return True
+                    self.covered.append(vertex)
 
     def __repr__(self):
-        return "TA - All assignments"
+        return 'TA - All assignments'
 
 
 class TD(Criteria):
     """Get all the edges of type "while" or "if" and checks that they are evaluated"""
 
     def check_criteria_against_paths(self, control_flow_graph, execution_paths):
-        decided = []
+        for edge in control_flow_graph.edges:
+            if edge.root_vertex.operation in ['if', 'while']:
+                self.to_cover.append(edge.child_vertex)
+
         for path in execution_paths:
             for index, vertex in enumerate(path):
                 if vertex.operation in ['if', 'while']:
-                    decided.append(path[index + 1])
-
-        for edge in control_flow_graph.edges:
-            if edge.root_vertex.operation in ['if', 'while'] and edge.child_vertex not in decided:
-                return False
-        return True
+                    self.covered.append(path[index + 1])
 
     def __repr__(self):
-        return "TD - All decisions"
+        return 'TD - All decisions'
 
 
 class kTC(Criteria):
@@ -67,22 +83,19 @@ class kTC(Criteria):
     check if they are in the execution_paths we got from execution."""
 
     def __init__(self, k=1):
+        super().__init__()
         self.k = k
 
     def check_criteria_against_paths(self, control_flow_graph, execution_paths):
-        k_paths = []
+        # all the k paths from the cover graph
+        self.to_cover = control_flow_graph.get_all_k_paths(self.k)
+
         # we get all the possible paths
         for path in execution_paths:
-            k_paths.append(path[:self.k])
-
-        # if in all the k paths from the cover graph
-        for path in control_flow_graph.get_all_k_paths(self.k):
-            if path not in k_paths:
-                return False
-        return True
+            self.covered.append(path) if len(path) <= self.k else None
 
     def __repr__(self):
-        return """k - TC - All {} paths""".format(self.k)
+        return 'k - TC - All {} paths'.format(self.k)
 
 
 class TC(Criteria):
@@ -91,26 +104,26 @@ class TC(Criteria):
     extract conditions from these decisions) and check if they are in some of
     the condition of the execution_paths we got from execution.
     """
+    def __init__(self):
+        self.to_cover = 0
+        self.covered = 0
 
     def check(self, control_flow_graph, test_sets):
         """Generate all paths from test_sets list and then compare different paths."""
-        conditions = self.get_conditions(control_flow_graph)
-        conditions = {condition: {True: None, False: None} for condition in conditions}
+        self.conditions = self.get_conditions(control_flow_graph)
+        self.conditions = {condition: {True: None, False: None} for condition in self.conditions}
 
         for test_set in test_sets:
-            conditions = self.check_conditions_from_test_set(
-                control_flow_graph,
-                test_set,
-                conditions
-            )
+            self.check_conditions_from_test_set(control_flow_graph, test_set)
 
-        for condition in conditions.values():
-            if not(condition[True] is not None and condition[False] is not None):
-                return False
+        for evaluation in self.conditions.values():
+            self.to_cover += 2
+            if evaluation[True]:
+                self.covered += 1
+            if evaluation[False]:
+                self.covered += 1
 
-        return True
-
-    def check_conditions_from_test_set(self, control_flow_graph, test_set, conditions):
+    def check_conditions_from_test_set(self, control_flow_graph, test_set):
         vertex = control_flow_graph.root_vertex
         while vertex.label != '_':
             out_edges = [edge for edge in control_flow_graph.edges if edge.root_vertex == vertex]
@@ -119,9 +132,9 @@ class TC(Criteria):
                 self.get_conditions_from_decision(edge.condition, possible_conditions)
                 for condition in possible_conditions:
                     if condition.eval(test_set):
-                        conditions[condition][True] = True
+                        self.conditions[condition][True] = True
                     else:
-                        conditions[condition][False] = True
+                        self.conditions[condition][False] = True
                 if edge.eval(test_set):
                     out_edge = edge
                     test_set = edge.eval(test_set)
@@ -129,7 +142,6 @@ class TC(Criteria):
             if not out_edge:
                 raise ExecutionError
             vertex = out_edge.child_vertex
-        return conditions
 
     def get_conditions(self, control_flow_graph):
         # get all conditions in cover graph
@@ -154,4 +166,14 @@ class TC(Criteria):
             raise ExecutionError
 
     def __repr__(self):
-        return """TC - All conditions"""
+        return 'TC - All conditions'
+
+    def __str__(self):
+        to_return = self.__repr__()
+        to_return += '\n======================================\n'
+        to_return += 'Overall coverage : {:.2f}%'.format(100 * self.covered / self.to_cover)
+        for condition, evaluation in self.conditions.items():
+            to_return += '\nCondition {} is evaluated to:'.format(condition)
+            to_return += '\n\tTrue: o' if evaluation[True] else '\tTrue: x'
+            to_return += '\n\tFalse: o' if evaluation[False] else '\tFalse: x'
+        return to_return
