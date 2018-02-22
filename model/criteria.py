@@ -91,6 +91,37 @@ class kTC(Criteria):
         return """k - TC - All {} paths""".format(self.k)
 
 
+class TDef(Criteria):
+    """
+    We get all the vertices containing an assigment from the cover graph and
+    check if they are in some of the path of the execution_paths we got from
+    execution.
+    """
+
+    def check_criteria_against_paths(self, cover_graph, execution_paths):
+        prog_vars = cover_graph.get_variables()
+        # we get all the vertices where there is an assignment in the graph
+        assignment_vertices = []
+        for var in prog_vars:
+            for vertex in cover_graph.vertices:
+                if var in cover_graph.get_def_variables(vertex):
+                    assignment_vertices.append(vertex)
+
+        # we check that all the vertices where there is an assignment are in
+        # at least one execution paths
+        for vertex in assignment_vertices:
+            is_in_one_path = False
+            for path in execution_paths:
+                if vertex in path:
+                    is_in_one_path = True
+            if not is_in_one_path:
+                return False
+        return True
+
+    def __repr__(self):
+        return "TDef - All definitions"
+
+
 class TC(Criteria):
     """
     We get all the conditions from the cover graph (get all decisions, then
