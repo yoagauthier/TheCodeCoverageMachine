@@ -1,4 +1,4 @@
-from model.nodes import ExecutionError
+from model.error import ExecutionError
 
 
 class CoverGraph(object):
