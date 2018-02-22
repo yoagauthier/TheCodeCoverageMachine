@@ -100,6 +100,12 @@ class TC(Criteria):
             if isinstance(subdecision, (BooleanOperatorNode, BooleanComparatorNode)):
                 self.get_conditions(subdecision, conditions)
 
+        # get all the ooposite conditions
+        # print(conditions)
+        # opp_conditions = []
+        # for condition in conditions:
+        #     opp_conditions.append(condition.to_opposite_condition())
+
         # get conditions from execution_paths
         exec_decisions = [edge.condition for path in execution_paths for vertex in path for edge in vertex.get_edges(cover_graph)]
         exec_conditions = []
@@ -109,6 +115,11 @@ class TC(Criteria):
 
         for condition in conditions:
             # check that the condition is validated somewhere
+            # TODO : also check that the condition not only exists, but is eval
+            # as false and as true in different paths. Here we just check that
+            # the condition has been evaluated (because it's in at least one
+            # execution path), but if it's been evaluated at True or False.
+            # Maybe we need to add attribute to the conditions nodes ?
             if condition not in exec_conditions:
                 return False
         return True
