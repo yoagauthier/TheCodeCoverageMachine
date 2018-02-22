@@ -8,7 +8,10 @@ if __name__ == "__main__":
     # get the initial values of the variables
 
     tree = ASTree('Examples/exemple.txt')
-    test_sets = [{'X': 1}, {'X': -1}]
+    test_sets = [
+        {'X': 1},
+        {'X': -1}
+    ]
     CG = tree.to_control_flow_graph()
 
     criterias = [TA(), TD(), kTC(5), TC()]

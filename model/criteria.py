@@ -4,7 +4,7 @@ Date: 21/02/2018
 
 This file defines all the logic for criteria classes.
 """
-from model.nodes import BooleanOperatorNode, BooleanComparatorNode
+from model.nodes import BooleanOperatorNode, BooleanComparatorNode, BooleanNode, NotNode
 from model.error import ExecutionError
 
 
@@ -92,44 +92,64 @@ class TC(Criteria):
     the condition of the execution_paths we got from execution.
     """
 
-    def check_criteria_against_paths(self, cover_graph, execution_paths):
+    def check(self, control_flow_graph, test_sets):
+        """Generate all paths from test_sets list and then compare different paths."""
+        conditions = self.get_conditions(control_flow_graph)
+        conditions = {condition: {True: None, False: None} for condition in conditions}
+
+        for test_set in test_sets:
+            conditions = self.check_conditions_from_test_set(
+                control_flow_graph,
+                test_set,
+                conditions
+            )
+
+        for condition in conditions.values():
+            if not(condition[True] is not None and condition[False] is not None):
+                return False
+
+        return True
+
+    def check_conditions_from_test_set(self, control_flow_graph, test_set, conditions):
+        vertex = control_flow_graph.root_vertex
+        while vertex.label != '_':
+            out_edges = [edge for edge in control_flow_graph.edges if edge.root_vertex == vertex]
+            for edge in out_edges:
+                possible_conditions = []
+                self.get_conditions_from_decision(edge.condition, possible_conditions)
+                for condition in possible_conditions:
+                    if condition.eval(test_set):
+                        conditions[condition][True] = True
+                    else:
+                        conditions[condition][False] = True
+                if edge.eval(test_set):
+                    out_edge = edge
+                    test_set = edge.eval(test_set)
+                    break
+            if not out_edge:
+                raise ExecutionError
+            vertex = out_edge.child_vertex
+        return conditions
+
+    def get_conditions(self, control_flow_graph):
         # get all conditions in cover graph
-        decisions = [edge.condition for edge in cover_graph.edges]
+        decisions = [edge.condition for edge in control_flow_graph.edges]
         conditions = []
         for subdecision in decisions:
             if isinstance(subdecision, (BooleanOperatorNode, BooleanComparatorNode)):
-                self.get_conditions(subdecision, conditions)
+                self.get_conditions_from_decision(subdecision, conditions)
+        return conditions
 
-        # get all the ooposite conditions
-        # print(conditions)
-        # opp_conditions = []
-        # for condition in conditions:
-        #     opp_conditions.append(condition.to_opposite_condition())
-
-        # get conditions from execution_paths
-        exec_decisions = [edge.condition for path in execution_paths for vertex in path for edge in vertex.get_edges(cover_graph)]
-        exec_conditions = []
-        for subdecision in exec_decisions:
-            if isinstance(subdecision, (BooleanOperatorNode, BooleanComparatorNode)):
-                self.get_conditions(subdecision, exec_conditions)
-
-        for condition in conditions:
-            # check that the condition is validated somewhere
-            # TODO : also check that the condition not only exists, but is eval
-            # as false and as true in different paths. Here we just check that
-            # the condition has been evaluated (because it's in at least one
-            # execution path), but if it's been evaluated at True or False.
-            # Maybe we need to add attribute to the conditions nodes ?
-            if condition not in exec_conditions:
-                return False
-        return True
-
-    def get_conditions(self, decision, conditions):
+    def get_conditions_from_decision(self, decision, conditions):
         if isinstance(decision, BooleanComparatorNode):
             conditions.append(decision)
         elif isinstance(decision, BooleanOperatorNode):
-            self.get_conditions(decision.left_expression, conditions)
-            self.get_conditions(decision.right_expression, conditions)
+            self.get_conditions_from_decision(decision.left_expression, conditions)
+            self.get_conditions_from_decision(decision.right_expression, conditions)
+        elif isinstance(decision, NotNode):
+            self.get_conditions_from_decision(decision.expression, conditions)
+        elif isinstance(decision, BooleanNode):
+            pass
         else:
             raise ExecutionError
 
