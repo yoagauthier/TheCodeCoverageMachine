@@ -186,6 +186,25 @@ class ControlFlowGraph(object):
                     to_return |= edge.condition.get_variables()
         return to_return
 
+    def _get_all_possible_paths_util(self, start_vertex, end_vertex, visited, current_path, all_paths):
+        current_path.append(start_vertex)
+        visited.add(start_vertex)
+        if start_vertex == end_vertex:
+            all_paths.append(current_path[:])
+        else:
+            for vertex in start_vertex.get_child_vertices(self):
+                if vertex not in visited:
+                    self._get_all_possible_paths_util(vertex, end_vertex, visited, current_path, all_paths)
+        current_path.pop()
+        visited.remove(start_vertex)
+
+    def get_all_possible_paths(self, u, v):
+        all_paths = []
+        current_path = []
+        visited = set()
+        self._get_all_possible_paths_util(u, v, visited, current_path, all_paths)
+        return all_paths
+
     def __str__(self):
         return '\n'.join([str(edge) for edge in self.edges])
 
@@ -221,6 +240,13 @@ class Vertex(object):
             # self is root of the edge, so the edge is child of self
             if edge.root_vertex == self:
                 L.append(edge)
+        return L
+
+    def get_child_vertices(self, cover_graph):
+        L = []
+        for edge in cover_graph.edges:
+            if edge.root_vertex == self:
+                L.append(edge.child_vertex)
         return L
 
     def __repr__(self):
