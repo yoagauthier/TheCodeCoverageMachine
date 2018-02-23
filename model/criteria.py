@@ -54,7 +54,7 @@ class TA(Criteria):
 
         for path in execution_paths:
             for vertex in path:
-                if vertex.operation == 'assignment':
+                if vertex.operation == 'assignment' and vertex not in self.covered:
                     self.covered.append(vertex)
 
     def __repr__(self):
@@ -71,7 +71,7 @@ class TD(Criteria):
 
         for path in execution_paths:
             for index, vertex in enumerate(path):
-                if vertex.operation in ['if', 'while']:
+                if vertex.operation in ['if', 'while'] and path[index + 1] not in self.covered:
                     self.covered.append(path[index + 1])
 
     def __repr__(self):
@@ -92,7 +92,7 @@ class kTC(Criteria):
 
         # we get all the possible paths
         for path in execution_paths:
-            self.covered.append(path) if len(path) <= self.k else None
+            self.covered.append(path) if len(path) <= self.k and path not in self.covered else None
 
     def __repr__(self):
         return 'k - TC - All {} paths'.format(self.k)
@@ -148,8 +148,7 @@ class TC(Criteria):
         decisions = [edge.condition for edge in control_flow_graph.edges]
         conditions = []
         for subdecision in decisions:
-            if isinstance(subdecision, (BooleanOperatorNode, BooleanComparatorNode)):
-                self.get_conditions_from_decision(subdecision, conditions)
+            self.get_conditions_from_decision(subdecision, conditions)
         return conditions
 
     def get_conditions_from_decision(self, decision, conditions):
@@ -174,6 +173,6 @@ class TC(Criteria):
         to_return += 'Overall coverage : {:.2f}%'.format(100 * self.covered / self.to_cover)
         for condition, evaluation in self.conditions.items():
             to_return += '\nCondition {} is evaluated to:'.format(condition)
-            to_return += '\n\tTrue: o' if evaluation[True] else '\tTrue: x'
-            to_return += '\n\tFalse: o' if evaluation[False] else '\tFalse: x'
+            to_return += '\n\tTrue: o' if evaluation[True] else '\n\tTrue: x'
+            to_return += '\n\tFalse: o' if evaluation[False] else '\n\tFalse: x'
         return to_return

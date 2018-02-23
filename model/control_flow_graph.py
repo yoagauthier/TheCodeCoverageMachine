@@ -4,6 +4,8 @@ Date: 21/02/2018
 
 This file defines all logic needed for control flow graph object
 """
+from copy import deepcopy
+
 from model.error import ExecutionError
 
 
@@ -193,7 +195,7 @@ class Edge(object):
     def eval(self, values):
         """Returns a value if the eval was possible, None otherwise"""
         if self.condition.eval(values):
-            return self.operation.eval(values)
+            return self.operation.eval(deepcopy(values))
         else:
             return None
 
