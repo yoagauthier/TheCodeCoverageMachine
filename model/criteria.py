@@ -34,7 +34,7 @@ class Criteria(object):
                 100 * len(self.covered) / len(self.to_cover)
             )
         except ZeroDivisionError:
-            to_return += 'Overall coverage : 0.00%'
+            to_return += 'Overall coverage : 100.00%'
         for elt in self.to_cover:
             if elt in self.covered:
                 to_return += '\nElement {} -- o'.format(elt)
