@@ -29,7 +29,7 @@ class Tokenizer(object):
         current_token = ''
 
         for char in text:
-            if char == ' ' or char == '\n':
+            if char in ' \n\t':
                 if len(current_token) > 0:
                     tokenized_text.append(current_token)
                     current_token = ''
@@ -70,7 +70,7 @@ class Token(object):
     key_words = ['skip', 'if', 'else', 'then', 'while', 'do']
     symbols = [';', ':', ':=']
 
-    arithmetic_operators = ['+', '-', '*', '/', '%']
+    arithmetic_operators = ['+', '-', '*', '/']
 
     boolean_operators = ['!', '&', '|']
     comparators = ['<', '>', '>=', '<=', '=']
