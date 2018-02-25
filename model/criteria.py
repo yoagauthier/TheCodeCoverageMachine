@@ -176,3 +176,19 @@ class TC(Criteria):
             to_return += '\n\tTrue: o' if evaluation[True] else '\n\tTrue: x'
             to_return += '\n\tFalse: o' if evaluation[False] else '\n\tFalse: x'
         return to_return
+
+
+class iTB(Criteria):
+    def __init__(self, i=1):
+        super().__init__()
+        self.i = i
+
+    def check_criteria_against_paths(self, control_flow_graph, execution_paths):
+        self.to_cover = control_flow_graph.get_all_i_loop_paths(self.i)
+
+        for path in execution_paths:
+            if path in self.to_cover and path not in self.covered:
+                self.covered.append(path)
+
+    def __repr__(self):
+        return 'i - TB - All {} loops'.format(self.i)

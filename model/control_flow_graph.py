@@ -81,7 +81,7 @@ class ControlFlowGraph(object):
             paths.append(self.get_path(test_set))
         return paths  # paths is like [[vertex1, vertex2, ...], [vertex1, vertex4, ...], ...]
 
-    def _get_all_k_paths_util(self, start_vertex, end_vertex, k, current_path, all_paths):
+    def _get_all_k_paths_util(self, start_vertex, k, current_path, all_paths):
         """
         Util function that delegates logic from get_all_k_paths.
         inspired from https://www.geeksforgeeks.org/find-paths-given-source-destination/
@@ -90,11 +90,11 @@ class ControlFlowGraph(object):
         current_path.append(start_vertex)
         if len(current_path) > k:
             pass
-        elif start_vertex == end_vertex:
+        elif start_vertex.label == '_':
             all_paths.append(current_path.copy())
         else:
             for edge in start_vertex.get_child_edges(self):
-                self._get_all_k_paths_util(edge.child_vertex, end_vertex, k, current_path, all_paths)
+                self._get_all_k_paths_util(edge.child_vertex, k, current_path, all_paths)
 
         current_path.pop()
 
@@ -102,8 +102,54 @@ class ControlFlowGraph(object):
         """Returns all k paths of the cover path"""
         all_paths = []
         current_path = []
-        self._get_all_k_paths_util(self.root_vertex, self.end_vertex, k, current_path, all_paths)
+        self._get_all_k_paths_util(self.root_vertex, k, current_path, all_paths)
         return all_paths
+
+    def get_all_i_loop_paths(self, i):
+        """Returns all i loop paths of the cover path"""
+        all_paths = []
+        current_path = []
+        self._get_all_i_loop_paths_util(self.root_vertex, i, current_path, all_paths)
+        return all_paths
+
+    def _get_all_i_loop_paths_util(self, start_vertex, i, current_path, all_paths):
+        """Util function that delegates logic from get_all_i_loop_paths."""
+        current_path.append(start_vertex)
+        if self._check_i_loop_pile(i, current_path):
+            pass
+        elif start_vertex.label == '_':
+            all_paths.append(current_path.copy())
+        else:
+            for edge in start_vertex.get_child_edges(self):
+                self._get_all_i_loop_paths_util(edge.child_vertex, i, current_path, all_paths)
+
+        current_path.pop()
+
+    def _check_i_loop_pile(self, i, current_path):
+        pile = [elt for elt in current_path if elt.operation == 'while']
+        if not pile:
+            return False
+
+        length_elt = {elt: 0 for elt in pile}
+        memory = [pile[0]]
+        previous_elt = pile[0]
+        for elt in pile:
+            if elt == previous_elt:
+                length_elt[elt] += 1
+                if length_elt[elt] > i + 1:
+                    return True
+            else:
+                if elt not in memory:
+                    memory.append(elt)
+                    length_elt[elt] = 1
+                else:
+                    memory.remove(previous_elt)
+                    length_elt[elt] += 1
+                    length_elt[previous_elt] = 0
+                    if length_elt[elt] > i + 1:
+                        return True
+                previous_elt = elt
+        return False
 
     def get_labels(self, operations=['assignment', 'skip', 'if', 'while']):
         return [vertex.label for vertex in self.vertices if vertex.operation in operations]
@@ -178,7 +224,7 @@ class Vertex(object):
         return L
 
     def __repr__(self):
-        return '<Vertex with label {}>'.format(self.label)
+        return '<Vertex {}>'.format(self.label)
 
 
 class Edge(object):
