@@ -1,8 +1,6 @@
 # programme pgcd
   	    # avec un tab
-1 : x := 5 ;
-2 : y := 15 ;
-while 3 : !( x = y ) do if 4 : !( x <= y )
-                          then 5 : x := ( x - y )
-			  else 6 : y := ( y - x )
+while 3 : !( X = Y ) do if 4 : !( X <= Y )
+                          then 5 : X := ( X - Y )
+			  else 6 : Y := ( Y - X )
                      
