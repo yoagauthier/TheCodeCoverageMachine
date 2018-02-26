@@ -219,8 +219,58 @@ class TDef(Criteria):
                 if var in control_flow_graph.get_def_variables(vertex):
                     def_vertices.append((var, vertex))
 
-        # these are all the path without re-defintion
-        # of form : μ 1 .l u .μ 2 .l 0 .μ 3 avec l u = Label(u), X ∈ ref (l 0 ) et ∀l ∈ Labels(μ 2 ), X 6∈ ref (l)
+        # getting all vertices where variables are effectively defined during the
+        # execution
+        def_in_exec_path = []
+        for var in prog_vars:
+            for path in execution_paths:
+                for vertex in path:
+                    for var2, vertex2 in def_vertices:
+                        if var == var2 and vertex == vertex2:
+                            def_in_exec_path.append((var, vertex))
+
+        # checking that those variables are effectively used
+        for var in prog_vars:
+            is_used_once = False
+            for path in execution_paths:
+                for vertex in path:
+                    for var2, vertex2 in ref_vertices:
+                        if var == var2 and vertex == vertex2:
+                            is_used_once = True
+            if not is_used_once:
+                return False
+        return True
+
+    def __repr__(self):
+        return "TDef - All definitions"
+
+
+class TU(Criteria):
+    """
+    We get the vertices where variables are assigned and references, then we
+    get all the possible paths for those variables where there is no re-defintion
+    of those varibles. The last step is ensuring that those possible paths are
+    effectively used during the execution.
+    """
+    def check_criteria_against_paths(self, control_flow_graph, execution_paths):
+        prog_vars = control_flow_graph.get_variables()
+        # we get all the vertices where there is an reference in the graph
+        ref_vertices = []
+        ref_variables = set()
+        for var in prog_vars:
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_ref_variables(vertex):
+                    ref_vertices.append((var, vertex))
+                    ref_variables.add(var)
+
+        # we also get all the vertices where there is a definition in the graph
+        def_vertices = []
+        for var in ref_variables:
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_def_variables(vertex):
+                    def_vertices.append((var, vertex))
+
+        # we get all the path without re-defintion of variables
         possible_paths = []
         for var, u in def_vertices:
             for var2, v in ref_vertices:
@@ -242,48 +292,6 @@ class TDef(Criteria):
             if el not in big_lst:
                 return False
         return True
-
-    def __repr__(self):
-        return "TDef - All definitions"
-
-
-class TU(Criteria):
-    def check_criteria_against_paths(self, control_flow_graph, execution_paths):
-        prog_vars = control_flow_graph.get_variables()
-        # we get all the vertices where there is an reference in the graph
-        ref_vertices = []
-        ref_variables = set()
-        for var in prog_vars:
-            for vertex in control_flow_graph.vertices:
-                if var in control_flow_graph.get_ref_variables(vertex):
-                    ref_vertices.append((var, vertex))
-                    ref_variables.add(var)
-
-        # we also get all the vertices where there is a definition in the graph
-        def_vertices = []
-        for var in ref_variables:
-            for vertex in control_flow_graph.vertices:
-                if var in control_flow_graph.get_def_variables(vertex):
-                    def_vertices.append((var, vertex))
-
-        # we check that all the vertices where there is an assignment are in
-        # at least one execution paths
-        # TODO : need to check that there is no variable redefinition in path
-        # if there is one, we need to check
-
-        # these are all the path without re-defintion
-        possible_paths = []
-        for var, u in def_vertices:
-            for var2, v in ref_vertices:
-                if var == var2 and int(u.label) < int(v.label):  # just need to check the ref if the variables are def
-                    print(u, v)
-                    possible_paths += control_flow_graph.get_all_possible_paths(u, v)
-        print("def vertices", def_vertices)
-        print("ref verticies", ref_vertices)
-        print("possible_paths", possible_paths)
-
-        # we need to check that in these paths, there is effectively an utilisation of the variables
-        # for path in possible_paths:
 
     def __repr__(self):
         return """TU - All Uses"""
