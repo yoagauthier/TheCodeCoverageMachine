@@ -201,23 +201,45 @@ class TDef(Criteria):
     execution.
     """
 
-    def check_criteria_against_paths(self, cover_graph, execution_paths):
-        prog_vars = cover_graph.get_variables()
-        # we get all the vertices where there is an assignment in the graph
-        assignment_vertices = []
+    def check_criteria_against_paths(self, control_flow_graph, execution_paths):
+        prog_vars = control_flow_graph.get_variables()
+        # we get all the vertices where there is an reference in the graph
+        ref_vertices = []
+        ref_variables = set()
         for var in prog_vars:
-            for vertex in cover_graph.vertices:
-                if var in cover_graph.get_def_variables(vertex):
-                    assignment_vertices.append(vertex)
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_ref_variables(vertex):
+                    ref_vertices.append((var, vertex))
+                    ref_variables.add(var)
 
-        # we check that all the vertices where there is an assignment are in
-        # at least one execution paths
-        for vertex in assignment_vertices:
-            is_in_one_path = False
-            for path in execution_paths:
-                if vertex in path:
-                    is_in_one_path = True
-            if not is_in_one_path:
+        # we also get all the vertices where there is a definition in the graph
+        def_vertices = []
+        for var in ref_variables:
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_def_variables(vertex):
+                    def_vertices.append((var, vertex))
+
+        # these are all the path without re-defintion
+        # of form : μ 1 .l u .μ 2 .l 0 .μ 3 avec l u = Label(u), X ∈ ref (l 0 ) et ∀l ∈ Labels(μ 2 ), X 6∈ ref (l)
+        possible_paths = []
+        for var, u in def_vertices:
+            for var2, v in ref_vertices:
+                if var == var2 and int(u.label) < int(v.label):  # just need to check the ref if the variables are def
+                    possible_paths += control_flow_graph.get_all_possible_paths(u, v)
+
+        # we check that the path without redefinition is effectively executed
+        for path in possible_paths:
+            is_executed_once = False
+            for exec_path in execution_paths:
+                if self.is_sublist(path, exec_path):
+                    is_executed_once = True
+            if not is_executed_once:
+                return False
+        return True
+
+    def is_sublist(self, small_lst, big_lst):
+        for el in small_lst:
+            if el not in big_lst:
                 return False
         return True
 
