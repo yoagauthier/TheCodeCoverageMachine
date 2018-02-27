@@ -211,6 +211,7 @@ class TDef(Criteria):
                 if var in control_flow_graph.get_ref_variables(vertex):
                     ref_vertices.append((var, vertex))
                     ref_variables.add(var)
+                    self.to_cover.append(vertex)
 
         # we also get all the vertices where there is a definition in the graph
         def_vertices = []
@@ -227,15 +228,16 @@ class TDef(Criteria):
                 for vertex in path:
                     for var2, vertex2 in def_vertices:
                         if var == var2 and vertex == vertex2:
-                            def_in_exec_path.append((var, vertex))
+                            def_in_exec_path.append(var)
 
         # checking that those variables are effectively used
-        for var in prog_vars:
+        for var in def_in_exec_path:
             is_used_once = False
             for path in execution_paths:
                 for vertex in path:
                     for var2, vertex2 in ref_vertices:
                         if var == var2 and vertex == vertex2:
+                            self.covered.append(vertex)
                             is_used_once = True
             if not is_used_once:
                 return False
@@ -276,6 +278,7 @@ class TU(Criteria):
             for var2, v in ref_vertices:
                 if var == var2 and int(u.label) < int(v.label):  # just need to check the ref if the variables are def
                     possible_paths += control_flow_graph.get_all_possible_paths(u, v)
+        self.to_cover = possible_paths
 
         # we check that the path without redefinition is effectively executed
         for path in possible_paths:
@@ -283,6 +286,7 @@ class TU(Criteria):
             for exec_path in execution_paths:
                 if self.is_sublist(path, exec_path):
                     is_executed_once = True
+                    self.covered.append(path)
             if not is_executed_once:
                 return False
         return True
