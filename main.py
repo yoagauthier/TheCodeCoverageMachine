@@ -1,6 +1,6 @@
 from copy import deepcopy
 from model.abstract_syntax_tree import ASTree
-from model.criteria import TA, TD, kTC, TDef, TU, TC
+from model.criteria import TA, TD, kTC, iTB, TDef, TU, TC
 
 if __name__ == "__main__":
 
@@ -14,7 +14,7 @@ if __name__ == "__main__":
     ]
     CG = tree.to_control_flow_graph()
 
-    criterias = [TA(), TD(), kTC(5), TDef(), TU(), TC()]
+    criterias = [TA(), TD(), kTC(5), iTB(2), TDef(), TU(), TC()]
     for criteria in criterias:
         criteria.check(CG, deepcopy(test_sets))
         print('\n', criteria)

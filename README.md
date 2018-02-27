@@ -110,7 +110,7 @@ Les éléments à courvir ici sont les chemins qui passent par la définition d'
 
 ### TDU - Tous les DU-chemins
 
-A compléter
+Non implémenté
 
 ### TC - Toutes les conditions
 
