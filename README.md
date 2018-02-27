@@ -13,7 +13,7 @@ Le projet contient deux dossiers `Examples` et `model`. Le premier contient l'en
 - `model/error.py` : contient l'ensemble des exceptions personnalisées qui seront levées par notre projet.
 - `model/nodes.py` : implémente l'ensemble de la logique des noeud de l'arbre de syntax abstraite.
 - `model/parser.py` : contient le parser de programme nous permettant de construire l'arbre de syntax abstraite à partir du code source tokenizé.
-- `model/tokenizer.py` : permet de tokenizer des sources en language WHILE annoté. 
+- `model/tokenizer.py` : permet de tokenizer des sources en language WHILE annoté.
 
 Notre projet contient également deux autres fichiers python : `main.py` et `coverage.py`. Le premier est un script travaillant sur quelques sources et sets de test pour illustrer le fonctionnement de notre logique. Le second est une CLI permettant d'utiliser notre projet sur de nouveaux fichiers. Voici comment utiliser notre CLI :
 
@@ -49,7 +49,7 @@ Pour l'étape de tokenization du code source, nous distinguons deux opérations 
 - Les comparateurs arithmétiques : '<', '<=', '>', '>=', et '='.
 - Les opérateurs booléens : '!', '&' et '|'.
 - Les variables booléennes : 'true' et 'false'.
-- Les labels qui sont des nombres entiers.
+- Les labels qui sont des nombres entiers. *Dans notre projet nous avons considéré que les labels devaient être en odre croissant (utile quand on explore les chemins pour avoir un graphe  de couvertue unidirectionnel, du point d'entrée du programme vers la sortie)*
 - Les noms de variables qui sont composées seulement de lettres.
 
 ### Parsing et construction de l'arbre de syntax abstraite
@@ -102,17 +102,17 @@ Les éléments à couvrir ici sont les chemins du graphe de contrôle passant pa
 
 ### TDéf - Toutes les définitions
 
-A compléter
+Les éléments à couvrir ici sont les des noeuds du graphe qui définissent des variables lors d'une éxécution. Lorsque les chemins sont exécutés, on vérifie que les variables correspondantes sont utilisée plus loin dans le chemin, et si c'est le cas le noeud de définition de la variable est correctement couvert.
 
 ### TU - Toutes les utilisations
 
-A compléter
+Les éléments à courvir ici sont les chemins qui passent par la définition d'une variable et ensuite par son utilisation. On trouve ces chemins en descendant le graphe en retrouvant les noeuds correspondants au variables. Les éléments seront effectivement couverts si ces chemins (potentiellement partiels) sont empruntés par des chemin d'exécution.
 
 ### TDU - Tous les DU-chemins
 
 A compléter
 
-### TC - Toutes les conditions 
+### TC - Toutes les conditions
 
 Les éléments à couvrir ici sont l'évaluation à true et à false de chaque condition du graphe de contrôle. Au contraire des autres critères, nous avons ici besoin de reconstruire les chemins d'exécutions pour vérifier les évaluations des conditions.
 

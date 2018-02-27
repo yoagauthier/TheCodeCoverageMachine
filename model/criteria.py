@@ -192,3 +192,99 @@ class iTB(Criteria):
 
     def __repr__(self):
         return 'i - TB - All {} loops'.format(self.i)
+
+
+class TDef(Criteria):
+    """
+    We get all the vertices containing an assigment from the cover graph and
+    check if they are in some of the path of the execution_paths we got from
+    execution.
+    """
+
+    def check_criteria_against_paths(self, control_flow_graph, execution_paths):
+        prog_vars = control_flow_graph.get_variables()
+        # we get all the vertices where there is an reference in the graph
+        ref_vertices = []
+        ref_variables = set()
+        for var in prog_vars:
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_ref_variables(vertex):
+                    ref_vertices.append((var, vertex))
+                    if var not in ref_variables:
+                        ref_variables.add(var)
+
+        # we also get all the vertices where there is a definition in the graph
+        def_vertices = []
+        for var in ref_variables:
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_def_variables(vertex):
+                    def_vertices.append((var, vertex))
+
+        # getting all vertices where variables are effectively defined during the
+        # execution
+        def_in_exec_path = []
+        for var in prog_vars:
+            for path in execution_paths:
+                for vertex in path:
+                    for var2, vertex2 in def_vertices:
+                        if var == var2 and vertex == vertex2 and vertex not in self.to_cover:
+                            def_in_exec_path.append(var)
+                            self.to_cover.append(vertex)
+
+        # checking that those variables are effectively used
+        for var in def_in_exec_path:
+            for path in execution_paths:
+                for vertex in path:
+                    for var2, vertex2 in ref_vertices:
+                        if var == var2 and vertex == vertex2 and vertex in self.to_cover and vertex not in self.covered:
+                            self.covered.append(vertex)
+
+    def __repr__(self):
+        return "TDef - All definitions"
+
+
+class TU(Criteria):
+    """
+    We get the vertices where variables are assigned and references, then we
+    get all the possible paths for those variables where there is no re-defintion
+    of those varibles. The last step is ensuring that those possible paths are
+    effectively used during the execution.
+    """
+    def check_criteria_against_paths(self, control_flow_graph, execution_paths):
+        prog_vars = control_flow_graph.get_variables()
+        # we get all the vertices where there is an reference in the graph
+        ref_vertices = []
+        ref_variables = set()
+        for var in prog_vars:
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_ref_variables(vertex):
+                    ref_vertices.append((var, vertex))
+                    ref_variables.add(var)
+
+        # we also get all the vertices where there is a definition in the graph
+        def_vertices = []
+        for var in ref_variables:
+            for vertex in control_flow_graph.vertices:
+                if var in control_flow_graph.get_def_variables(vertex):
+                    def_vertices.append((var, vertex))
+
+        # we get all the path without re-defintion of variables
+        for var, u in def_vertices:
+            for var2, v in ref_vertices:
+                if var == var2 and int(u.label) < int(v.label):  # just need to check the ref if the variables are def
+                    self.to_cover += control_flow_graph.get_all_possible_paths(u, v)
+
+        # we check that the path without redefinition is effectively executed
+        for path in self.to_cover:
+            for exec_path in execution_paths:
+                if self.is_sublist(path, exec_path) and path not in self.covered:
+                    self.covered.append(path)
+
+    def is_sublist(self, small_lst, big_lst):
+        for el in small_lst:
+            if el not in big_lst:
+                return False
+        return True
+
+    def __repr__(self):
+        return """TU - All Uses"""
