@@ -163,27 +163,17 @@ class ControlFlowGraph(object):
     def get_def_variables(self, vertex):
         to_return = set()
         for edge in self.edges:
-            if type(vertex) == int:
-                if edge.root_vertex.operation == 'assignment' and edge.root_vertex.label == vertex:
-                    to_return |= edge.operation.left_expression.get_variables()
-            else:
-                if edge.root_vertex.operation == 'assignment' and edge.root_vertex == vertex:
-                    to_return |= edge.operation.left_expression.get_variables()
+            if edge.root_vertex.operation == 'assignment' and edge.root_vertex == vertex:
+                return edge.operation.left_expression.get_variables()
         return to_return
 
     def get_ref_variables(self, vertex):
         to_return = set()
         for edge in self.edges:
-            if type(vertex) == int:
-                if edge.root_vertex.label == vertex:
-                    if edge.root_vertex.operation == 'assignment':
-                        to_return |= edge.operation.right_expression.get_variables()
-                    to_return |= edge.condition.get_variables()
-            else:
-                if edge.root_vertex == vertex:
-                    if edge.root_vertex.operation == 'assignment':
-                        to_return |= edge.operation.right_expression.get_variables()
-                    to_return |= edge.condition.get_variables()
+            if edge.root_vertex == vertex:
+                if edge.root_vertex.operation == 'assignment':
+                    to_return |= edge.operation.right_expression.get_variables()
+                to_return |= edge.condition.get_variables()
         return to_return
 
     def _get_all_possible_paths_util(self, start_vertex, end_vertex, visited, current_path, all_paths):
