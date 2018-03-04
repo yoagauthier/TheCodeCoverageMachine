@@ -16,6 +16,8 @@ class Criteria(object):
 
     def check(self, control_flow_graph, test_sets):
         """Generate all paths from test_sets list and then compare different paths."""
+        self.to_cover = []
+        self.covered = []
         execution_paths = control_flow_graph.get_all_paths(test_sets)
         return self.check_criteria_against_paths(control_flow_graph, execution_paths)
 
@@ -110,6 +112,9 @@ class TC(Criteria):
 
     def check(self, control_flow_graph, test_sets):
         """Generate all paths from test_sets list and then compare different paths."""
+        self.to_cover = 0
+        self.covered = 0
+
         self.conditions = self.get_conditions(control_flow_graph)
         self.conditions = {condition: {True: None, False: None} for condition in self.conditions}
 
@@ -215,11 +220,7 @@ class TDef(Criteria):
                 ref_variables = control_flow_graph.get_ref_variables(vertex)
                 for variable in ref_variables:
                     for elt in pile:
-                        if (
-                            variable == elt[0] and
-                            vertex.label > elt[1].label and
-                            elt not in self.covered
-                        ):
+                        if (variable == elt[0] and elt not in self.covered):
                             self.covered.append(elt)
                             pile.remove(elt)
 

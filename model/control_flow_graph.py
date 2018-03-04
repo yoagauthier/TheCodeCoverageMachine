@@ -29,6 +29,7 @@ class ControlFlowGraph(object):
         self.end_vertex = end_vertex
         self.vertices = vertices
         self.edges = edges
+        self.name = ''
 
     def renamed_edges(self, old_vertex, new_vertex):
         """Return edges with old_vertex replaced by new_vertex. We do not affect self.edges"""

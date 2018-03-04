@@ -15,6 +15,8 @@ class ASTree(object):
     def __init__(self, file_path):
         """Create the abstract syntax tree from the given filepath"""
         # Loading raw content from file path
+        self.program_file_path = file_path
+
         with open(file_path, 'r') as program_file:
             self.raw_program = program_file.read()
 
@@ -57,7 +59,9 @@ class ASTree(object):
 
     def to_control_flow_graph(self):
         """Returns the cover graph from this abstract syntax tree."""
-        return self.root_node.to_control_flow_graph()
+        control_flow_graph = self.root_node.to_control_flow_graph()
+        control_flow_graph.name = self.program_file_path
+        return control_flow_graph
 
     def eval(self, env={}):
         """Evaluate the program from the given environment input."""

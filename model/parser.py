@@ -6,6 +6,7 @@ This file defines ProgramParser class to parse from tokenized code.
 """
 from model.error import ParsingError
 from model.nodes import (
+    Node,
     AddNode,
     BooleanNode,
     MinusNode,
@@ -56,6 +57,7 @@ class ProgramParser(object):
 
     def parse(self):
         """Method to call to parse an entire source code"""
+        Node.seen_labels = []
         self.index = 0
         self.tokens = ['{'] + self.tokens + ['}']
         self.end = len(self.tokens)
