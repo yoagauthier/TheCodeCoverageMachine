@@ -16,6 +16,8 @@ class Criteria(object):
 
     def check(self, control_flow_graph, test_sets):
         """Generate all paths from test_sets list and then compare different paths."""
+        self.to_cover = []
+        self.covered = []
         execution_paths = control_flow_graph.get_all_paths(test_sets)
         return self.check_criteria_against_paths(control_flow_graph, execution_paths)
 
@@ -110,6 +112,9 @@ class TC(Criteria):
 
     def check(self, control_flow_graph, test_sets):
         """Generate all paths from test_sets list and then compare different paths."""
+        self.to_cover = 0
+        self.covered = 0
+
         self.conditions = self.get_conditions(control_flow_graph)
         self.conditions = {condition: {True: None, False: None} for condition in self.conditions}
 
@@ -202,45 +207,29 @@ class TDef(Criteria):
     """
 
     def check_criteria_against_paths(self, control_flow_graph, execution_paths):
-        prog_vars = control_flow_graph.get_variables()
-        # we get all the vertices where there is an reference in the graph
-        ref_vertices = []
-        ref_variables = set()
-        for var in prog_vars:
-            for vertex in control_flow_graph.vertices:
-                if var in control_flow_graph.get_ref_variables(vertex):
-                    ref_vertices.append((var, vertex))
-                    if var not in ref_variables:
-                        ref_variables.add(var)
+        # All elements to cover are variables defined in vertices
+        for vertex in control_flow_graph.vertices:
+            def_variables = control_flow_graph.get_def_variables(vertex)
+            for variable in def_variables:
+                self.to_cover.append((variable, vertex))
 
-        # we also get all the vertices where there is a definition in the graph
-        def_vertices = []
-        for var in ref_variables:
-            for vertex in control_flow_graph.vertices:
-                if var in control_flow_graph.get_def_variables(vertex):
-                    def_vertices.append((var, vertex))
+        # A covered element is a variable which is ref after being def
+        for path in execution_paths:
+            pile = []
+            for vertex in path:
+                ref_variables = control_flow_graph.get_ref_variables(vertex)
+                for variable in ref_variables:
+                    for elt in pile:
+                        if (variable == elt[0] and elt not in self.covered):
+                            self.covered.append(elt)
+                            pile.remove(elt)
 
-        # getting all vertices where variables are effectively defined during the
-        # execution
-        def_in_exec_path = []
-        for var in prog_vars:
-            for path in execution_paths:
-                for vertex in path:
-                    for var2, vertex2 in def_vertices:
-                        if var == var2 and vertex == vertex2 and vertex not in self.to_cover:
-                            def_in_exec_path.append(var)
-                            self.to_cover.append(vertex)
-
-        # checking that those variables are effectively used
-        for var in def_in_exec_path:
-            for path in execution_paths:
-                for vertex in path:
-                    for var2, vertex2 in ref_vertices:
-                        if var == var2 and vertex == vertex2 and vertex in self.to_cover and vertex not in self.covered:
-                            self.covered.append(vertex)
+                def_variables = control_flow_graph.get_def_variables(vertex)
+                for variable in def_variables:
+                    pile.append((variable, vertex))
 
     def __repr__(self):
-        return "TDef - All definitions"
+        return 'TDef - All definitions'
 
 
 class TU(Criteria):
@@ -271,7 +260,8 @@ class TU(Criteria):
         # we get all the path without re-defintion of variables
         for var, u in def_vertices:
             for var2, v in ref_vertices:
-                if var == var2 and int(u.label) < int(v.label):  # just need to check the ref if the variables are def
+                # just need to check the ref if the variables are def
+                if var == var2 and int(u.label) < int(v.label):
                     self.to_cover += control_flow_graph.get_all_possible_paths(u, v)
 
         # we check that the path without redefinition is effectively executed
@@ -287,4 +277,4 @@ class TU(Criteria):
         return True
 
     def __repr__(self):
-        return """TU - All Uses"""
+        return 'TU - All Uses'
