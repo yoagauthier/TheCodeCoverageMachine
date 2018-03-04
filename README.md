@@ -15,7 +15,7 @@ Le projet contient deux dossiers `Examples` et `model`. Le premier contient l'en
 - `model/parser.py` : contient le parser de programme nous permettant de construire l'arbre de syntax abstraite à partir du code source tokenizé.
 - `model/tokenizer.py` : permet de tokenizer des sources en language WHILE annoté.
 
-Notre projet contient également deux autres fichiers python : `main.py` et `coverage.py`. Le premier est un script travaillant sur quelques sources et sets de test pour illustrer le fonctionnement de notre logique. Le second est une CLI permettant d'utiliser notre projet sur de nouveaux fichiers. Voici comment utiliser notre CLI :
+Notre projet contient également deux autres fichiers python : `main.py` et `coverage.py`. Le premier est un script travaillant sur le programme pgcd et des sets de test pour illustrer les différentes relations entre les critères appliquer à pgcd. Le second est une CLI permettant d'utiliser notre projet sur de nouveaux fichiers. Voici comment utiliser notre CLI :
 
 ```sh
 coverage.py <source_filepath> <testsets_filepath> [--kTC=<k>] [--iTB=<i>]
@@ -116,6 +116,30 @@ Non implémenté
 
 Les éléments à couvrir ici sont l'évaluation à true et à false de chaque condition du graphe de contrôle. Au contraire des autres critères, nous avons ici besoin de reconstruire les chemins d'exécutions pour vérifier les évaluations des conditions.
 
-## Relations sur les critères
+## Relations sur les critères pour l'exemple du PGCD
 
-A compléter - Utiliser les critères sur PGCD et essayer de tous les couvrir. Parler ensuite des relations (plus fort que, ...)
+Nous allons ici discuter des relations sur les critères pour l'exemple du programme pgcd se trouvant dans le fichier `Examples/pgcd.txt`. Nous nous baserons sur les résultats obtenus par l'éxécution du script `main.py`.
+
+### TA et TD
+
+Ici nous remarquons que la couverture de TA est équivalente à celle de TD. Cela vient du fait que nous sommes obligés de couvrir toutes les décisions du noeud if 2 pour couvrir toutes les assignations et toutes les décisions du noeud while 1 pour que le programme se termine et passe par le noeud if 2. Pour un autre programme, ces deux critères pourraient ne pas être équivalents si une décision mène à un ensemble d'instructions skip. Dans ce cas là on peut ne pas couvrir la décision menant à cette suite d'instruction et quand même couvrir l'ensemble des assignations.
+
+### TD et kTC
+
+Ici cela va dépendre de la valeur de k. Dans notre exemple du PGCD, si l'on prend k = 2, alors ce sont des sets de tests complétement différents qui vont jouer sur la couverture des critères. Cela vient du fait que les petits chemins ne passent pas dans les boucles. En revanche, si l'on augente la valeur de k, 5 pour notre exemple, alors le critère kTC sera plus fort que le critère TD. puisqu'en plus de couvrir les chemins de longueur minimum pour couvrir aussi les décisions, on devra couvrir les petits et grands chemins.
+
+### kTC et iTB
+
+Pour l'équivalence entre ces deux critères, cela va surtout dépendre des valeurs de k et i choisies. Dans notre exemple pour k = 5 et i = 1, on a les mêmes chemins à couvrir, donc les critères sont équivalents. Si la valeur de i induit des chemins de longueur plus grande que ceux de induit par k alors le critère kTC sera moins fort que le critère iTB. Sinon ce sera l'inverse.
+
+### TDef et TA
+
+Pour le cas de PGCD, les critères TDef et TA sont équivalents car toutes les définitions de PGCD sont utilisées dans la conditions terminal de la boucle while ayant pour label 1. Dans le cas d'un programme terminant avec une affectation de variables, alors on ne peut même par arriver à une couverture totale de ce critère puisqu'il serait impossible d'utiliser cette dernière définition.
+
+### TU et TA
+
+Dans l'exemple du PGCD, le critère TU implique de couvrir un chemin qui passe par toutes les assignations. Le critère TU est donc plus fort que le critère TA puisque celui-ci peut être satisfait par d'autres jeux de tests.
+
+### TD et TC
+
+Dans notre exemple du PGCD, TD et TC sont équivalents, car il n'y a pas d'opérateurs booléens binaires au sein des décisions. Si cela n'était pas le cas alors le critères TC serait plus dur à couvrir car il induirait plus de chemins à couvrir. 
